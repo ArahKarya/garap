@@ -39,7 +39,7 @@ projectsRouter.get(
   requirePermissions(PERMISSIONS.PROJECT_READ),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.get(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.get(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -70,7 +70,7 @@ projectsRouter.patch(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       const input = getValidated<UpdateProjectInput>(req);
-      res.json(ok(await svc.update(req.params.id, input, { ownerId: req.user!.id })));
+      res.json(ok(await svc.update(req.params.id as string, input, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -83,7 +83,7 @@ projectsRouter.delete(
   audit('DELETE', 'project'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.softDelete(req.params.id, { ownerId: req.user!.id });
+      await svc.softDelete(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ deleted: true }));
     } catch (err) {
       next(err);
@@ -97,7 +97,7 @@ projectsRouter.post(
   audit('UPDATE', 'project'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.restore(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.restore(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -110,7 +110,7 @@ projectsRouter.delete(
   audit('DELETE', 'project.purge'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.purge(req.params.id, { ownerId: req.user!.id });
+      await svc.purge(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ purged: true }));
     } catch (err) {
       next(err);

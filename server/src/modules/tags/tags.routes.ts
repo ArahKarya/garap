@@ -76,7 +76,7 @@ tagsRouter.patch(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       const input = getValidated<UpdateTagInput>(req);
-      res.json(ok(await svc.update(req.params.id, input, { ownerId: req.user!.id })));
+      res.json(ok(await svc.update(req.params.id as string, input, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -89,7 +89,7 @@ tagsRouter.delete(
   audit('DELETE', 'tag'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.remove(req.params.id, { ownerId: req.user!.id });
+      await svc.remove(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ deleted: true }));
     } catch (err) {
       next(err);

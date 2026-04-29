@@ -130,7 +130,7 @@ function TrashGroup({ config }: TrashGroupProps) {
       <CardContent>
         {isLoading && <Skeleton className="h-12 w-full" />}
         {!isLoading && count === 0 && (
-          <EmptyState message={`Tidak ada ${config.label.toLowerCase()} di trash.`} />
+          <EmptyState description={`Tidak ada ${config.label.toLowerCase()} di trash.`} />
         )}
         {!isLoading && data && data.length > 0 && (
           <div className="space-y-2">
@@ -193,7 +193,7 @@ export function TrashPage() {
     <div className="space-y-4">
       <PageHeader
         title="Trash"
-        description="Item yang dihapus tetap ada di sini sampai kamu pulihkan. Tidak ada auto-purge."
+        subtitle="Item yang dihapus tetap ada di sini sampai kamu pulihkan. Tidak ada auto-purge."
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {groups.map((g) => (

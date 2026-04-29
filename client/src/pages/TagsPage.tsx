@@ -100,8 +100,8 @@ export function TagsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Tags"
-        description="Tag universal untuk semua entitas (task, project, link, note, document)."
-        actions={
+        subtitle="Tag universal untuk semua entitas (task, project, link, note, document)."
+        action={
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
             Tag Baru
@@ -130,7 +130,7 @@ export function TagsPage() {
             {!tagsQuery.isLoading && (!tagsQuery.data || tagsQuery.data.length === 0) && (
               <TableRow>
                 <TableCell colSpan={3}>
-                  <EmptyState message="Belum ada tag." />
+                  <EmptyState description="Belum ada tag." />
                 </TableCell>
               </TableRow>
             )}

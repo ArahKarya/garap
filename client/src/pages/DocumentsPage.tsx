@@ -47,6 +47,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TagPicker } from '@/components/TagPicker';
+import { TagFilter } from '@/components/TagFilter';
 
 interface DocumentRow {
   id: string;
@@ -186,8 +187,10 @@ export function DocumentsPage() {
     api
       .get(`/documents/${id}/download`, { responseType: 'blob' })
       .then((res) => {
+        // Axios v1 headers can be string | string[] | AxiosHeaders; coerce.
+        const ct = res.headers['content-type'];
         const blob = new Blob([res.data], {
-          type: res.headers['content-type'] ?? 'application/octet-stream',
+          type: typeof ct === 'string' ? ct : 'application/octet-stream',
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -212,8 +215,8 @@ export function DocumentsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Documents"
-        description="Upload file lokal atau simpan link ke file di GDrive/lainnya."
-        actions={
+        subtitle="Upload file lokal atau simpan link ke file di GDrive/lainnya."
+        action={
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
             Tambah Document
@@ -248,7 +251,7 @@ export function DocumentsPage() {
               (!documentsQuery.data || documentsQuery.data.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={6}>
-                    <EmptyState message="Belum ada document. Upload file atau simpan link." />
+                    <EmptyState description="Belum ada document. Upload file atau simpan link." />
                   </TableCell>
                 </TableRow>
               )}

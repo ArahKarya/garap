@@ -90,8 +90,8 @@ export function CalendarPage() {
     <div className="space-y-4">
       <PageHeader
         title="Kalender"
-        description="Task dengan tenggat ditampilkan per hari."
-        actions={
+        subtitle="Task dengan tenggat ditampilkan per hari."
+        action={
           <div className="flex items-center gap-1">
             <Button
               variant="outline"

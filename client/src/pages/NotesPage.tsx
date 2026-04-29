@@ -154,8 +154,8 @@ export function NotesPage() {
     <div className="space-y-4">
       <PageHeader
         title="Notes"
-        description="Catatan markdown — pin yang penting di atas."
-        actions={
+        subtitle="Catatan markdown — pin yang penting di atas."
+        action={
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
             Note Baru
@@ -175,7 +175,7 @@ export function NotesPage() {
 
       {!notesQuery.isLoading && (!notesQuery.data || notesQuery.data.length === 0) && (
         <Card className="p-8">
-          <EmptyState message="Belum ada catatan. Klik “Note Baru” untuk mulai." />
+          <EmptyState description="Belum ada catatan. Klik “Note Baru” untuk mulai." />
         </Card>
       )}
 

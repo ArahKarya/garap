@@ -130,8 +130,8 @@ export function ProjectsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Projects"
-        description="Container untuk task, link, dokumen, dan note."
-        actions={
+        subtitle="Container untuk task, link, dokumen, dan note."
+        action={
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
             Project Baru
@@ -166,7 +166,7 @@ export function ProjectsPage() {
               (!projectsQuery.data || projectsQuery.data.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={6}>
-                    <EmptyState message="Belum ada project." />
+                    <EmptyState description="Belum ada project." />
                   </TableCell>
                 </TableRow>
               )}

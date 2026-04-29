@@ -163,8 +163,8 @@ export function TasksPage() {
     <div className="space-y-4">
       <PageHeader
         title="Tasks"
-        description="Daftar pekerjaan kamu, urut berdasarkan prioritas dan tenggat."
-        actions={
+        subtitle="Daftar pekerjaan kamu, urut berdasarkan prioritas dan tenggat."
+        action={
           <div className="flex items-center gap-2">
             <Select
               value={statusFilter}
@@ -217,7 +217,7 @@ export function TasksPage() {
             {!tasksQuery.isLoading && (!tasksQuery.data || tasksQuery.data.length === 0) && (
               <TableRow>
                 <TableCell colSpan={7}>
-                  <EmptyState message="Belum ada task. Klik “Tambah Task”." />
+                  <EmptyState description="Belum ada task. Klik “Tambah Task”." />
                 </TableCell>
               </TableRow>
             )}

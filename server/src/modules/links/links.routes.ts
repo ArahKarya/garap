@@ -39,7 +39,7 @@ linksRouter.get(
   requirePermissions(PERMISSIONS.LINK_READ),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.get(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.get(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -70,7 +70,7 @@ linksRouter.patch(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       const input = getValidated<UpdateLinkInput>(req);
-      res.json(ok(await svc.update(req.params.id, input, { ownerId: req.user!.id })));
+      res.json(ok(await svc.update(req.params.id as string, input, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -83,7 +83,7 @@ linksRouter.delete(
   audit('DELETE', 'link'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.softDelete(req.params.id, { ownerId: req.user!.id });
+      await svc.softDelete(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ deleted: true }));
     } catch (err) {
       next(err);
@@ -97,7 +97,7 @@ linksRouter.post(
   audit('UPDATE', 'link'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.restore(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.restore(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -110,7 +110,7 @@ linksRouter.delete(
   audit('DELETE', 'link.purge'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.purge(req.params.id, { ownerId: req.user!.id });
+      await svc.purge(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ purged: true }));
     } catch (err) {
       next(err);
@@ -123,7 +123,7 @@ linksRouter.post(
   requirePermissions(PERMISSIONS.LINK_READ),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.recordVisit(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.recordVisit(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -136,7 +136,7 @@ linksRouter.post(
   audit('UPDATE', 'link.metadata'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.refreshMetadata(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.refreshMetadata(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }

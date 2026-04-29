@@ -15,7 +15,7 @@ export class BaseRepository<T extends { id: string }> {
   ) {}
 
   private get model() {
-    return (prisma as Record<string, unknown>)[this.modelName] as Record<
+    return (prisma as unknown as Record<string, unknown>)[this.modelName] as Record<
       string,
       (...args: unknown[]) => Promise<unknown>
     >;
@@ -31,7 +31,7 @@ export class BaseRepository<T extends { id: string }> {
       this.model.count({ where }),
     ]);
 
-    return buildPagination(items as T[], total, q.page, q.limit);
+    return buildPagination(items as T[], total as number, q.page, q.limit);
   }
 
   async findById(id: string, opts?: FindOptions): Promise<T> {

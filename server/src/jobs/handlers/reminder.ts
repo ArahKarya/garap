@@ -2,7 +2,7 @@ import type { Processor } from 'bullmq';
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
 
-interface ReminderPayload {
+export interface ReminderPayload {
   /** Reserved for future per-user fan-out. Empty = check all active users. */
   userId?: string;
 }

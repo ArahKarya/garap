@@ -63,6 +63,10 @@ export async function login(input: LoginInput, ip: string | null, userAgent: str
     throw UnauthorizedError('Email atau password salah');
   }
 
+  // passwordHash is nullable for Google-OAuth-only accounts — block local login.
+  if (!user.passwordHash) {
+    throw UnauthorizedError('Akun ini hanya bisa login lewat Google');
+  }
   const ok = await bcrypt.compare(input.password, user.passwordHash);
   if (!ok) {
     await recordAudit({
@@ -131,6 +135,9 @@ export async function changePassword(
   newPassword: string,
 ) {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  if (!user.passwordHash) {
+    throw UnauthorizedError('Akun ini tidak punya password lokal — pakai Google login');
+  }
   const ok = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!ok) throw UnauthorizedError('Password saat ini salah');
   const passwordHash = await bcrypt.hash(newPassword, 10);

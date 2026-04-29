@@ -71,7 +71,7 @@ documentsRouter.get(
   requirePermissions(PERMISSIONS.DOCUMENT_READ),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.get(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.get(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -140,7 +140,7 @@ documentsRouter.patch(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       const input = getValidated<UpdateDocumentInput>(req);
-      res.json(ok(await svc.update(req.params.id, input, { ownerId: req.user!.id })));
+      res.json(ok(await svc.update(req.params.id as string, input, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -153,7 +153,7 @@ documentsRouter.delete(
   audit('DELETE', 'document'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.softDelete(req.params.id, { ownerId: req.user!.id });
+      await svc.softDelete(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ deleted: true }));
     } catch (err) {
       next(err);
@@ -167,7 +167,7 @@ documentsRouter.post(
   audit('UPDATE', 'document'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      res.json(ok(await svc.restore(req.params.id, { ownerId: req.user!.id })));
+      res.json(ok(await svc.restore(req.params.id as string, { ownerId: req.user!.id })));
     } catch (err) {
       next(err);
     }
@@ -180,7 +180,7 @@ documentsRouter.delete(
   audit('DELETE', 'document.purge'),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      await svc.purge(req.params.id, { ownerId: req.user!.id });
+      await svc.purge(req.params.id as string, { ownerId: req.user!.id });
       res.json(ok({ purged: true }));
     } catch (err) {
       next(err);
@@ -193,7 +193,7 @@ documentsRouter.get(
   requirePermissions(PERMISSIONS.DOCUMENT_READ),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      const file = await svc.resolveDownload(req.params.id, { ownerId: req.user!.id });
+      const file = await svc.resolveDownload(req.params.id as string, { ownerId: req.user!.id });
       res.setHeader('Content-Type', file.mimeType);
       res.setHeader('Content-Length', String(file.size));
       res.setHeader(

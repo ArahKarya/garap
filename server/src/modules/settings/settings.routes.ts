@@ -34,7 +34,7 @@ settingsRouter.get(
   requirePermissions(PERMISSIONS.SETTINGS_READ),
   async (req, res, next) => {
     try {
-      const setting = await prisma.setting.findUnique({ where: { key: req.params.key } });
+      const setting = await prisma.setting.findUnique({ where: { key: req.params.key as string } });
       res.json(ok(setting));
     } catch (err) {
       next(err);

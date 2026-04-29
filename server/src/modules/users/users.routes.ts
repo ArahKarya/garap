@@ -37,7 +37,7 @@ usersRouter.get(
   requirePermissions(PERMISSIONS.USER_READ),
   async (req, res, next) => {
     try {
-      const user = await svc.get(req.params.id);
+      const user = await svc.get(req.params.id as string);
       res.json(ok(user));
     } catch (err) {
       next(err);
@@ -69,7 +69,7 @@ usersRouter.patch(
   async (req, res, next) => {
     try {
       const input = getValidated<import('@panggonmikir/shared').UpdateUserInput>(req);
-      const user = await svc.update(req.params.id, input);
+      const user = await svc.update(req.params.id as string, input);
       res.json(ok(user));
     } catch (err) {
       next(err);
@@ -83,7 +83,7 @@ usersRouter.delete(
   audit('DELETE', 'user'),
   async (req, res, next) => {
     try {
-      await svc.remove(req.params.id);
+      await svc.remove(req.params.id as string);
       res.json(ok({ deleted: true }));
     } catch (err) {
       next(err);
@@ -99,7 +99,7 @@ usersRouter.post(
   async (req, res, next) => {
     try {
       const input = getValidated<{ newPassword: string }>(req);
-      await svc.resetPassword(req.params.id, input.newPassword);
+      await svc.resetPassword(req.params.id as string, input.newPassword);
       res.json(ok({ reset: true }));
     } catch (err) {
       next(err);

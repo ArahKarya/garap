@@ -41,7 +41,7 @@ notificationsRouter.post(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       await prisma.notification.updateMany({
-        where: { id: req.params.id, userId: req.user!.id, readAt: null },
+        where: { id: req.params.id as string, userId: req.user!.id, readAt: null },
         data: { readAt: new Date() },
       });
       res.json(ok({ read: true }));

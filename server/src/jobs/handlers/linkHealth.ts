@@ -2,7 +2,7 @@ import type { Processor } from 'bullmq';
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
 
-interface LinkHealthPayload {
+export interface LinkHealthPayload {
   /** Reserved — when set, only check this user's links. Empty = scan all active. */
   userId?: string;
   /** Optional cap to avoid hammering on first run. Default 200 per sweep. */

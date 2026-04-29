@@ -16,10 +16,9 @@
     "sourceMap": true,
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@panggonmikir/shared": ["./packages/shared/src/index.ts"],
-      "@panggonmikir/shared/*": ["./packages/shared/src/*"]
-    }
+    "noFallthroughCasesInSwitch": true
+    // No `paths` — `@panggonmikir/shared` resolves via package.json `exports`
+    // to `./packages/shared/dist`. Run `pnpm --filter @panggonmikir/shared build`
+    // before any server build (Dockerfile + dev script already do this).
   }
 }

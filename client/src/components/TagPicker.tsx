@@ -138,16 +138,12 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
       ))}
 
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-xs gap-1 border-dashed"
-          >
-            <Plus className="h-3 w-3" />
-            Tag
-          </Button>
+        <PopoverTrigger
+          type="button"
+          className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-input bg-background px-2 text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+        >
+          <Plus className="h-3 w-3" />
+          Tag
         </PopoverTrigger>
         <PopoverContent className="w-64 p-2" align="start">
           <Input

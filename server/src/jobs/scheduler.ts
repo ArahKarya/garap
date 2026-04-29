@@ -1,4 +1,4 @@
-import { JOB_QUEUES } from '@panggonmikir/shared';
+import { JOB_QUEUES, type JobQueueName } from '@panggonmikir/shared';
 import { getQueue } from '../services/queue.js';
 import { logger } from '../lib/logger.js';
 
@@ -7,7 +7,17 @@ import { logger } from '../lib/logger.js';
  * idempotent — BullMQ keys jobs by their repeat config, so worker restarts
  * won't create duplicates.
  */
-const SCHEDULES = [
+interface ScheduleSpec {
+  queue: JobQueueName;
+  jobName: string;
+  cron: string;
+  payload: Record<string, unknown>;
+  description: string;
+  /** Override the queue used to enqueue (e.g. weekly-review reuses reminder worker). */
+  queueOverride?: JobQueueName;
+}
+
+const SCHEDULES: ScheduleSpec[] = [
   {
     queue: JOB_QUEUES.REMINDER,
     jobName: 'sweep-due-tasks',
@@ -23,15 +33,16 @@ const SCHEDULES = [
     description: 'Probe each saved link and flag the broken ones',
   },
   {
-    queue: JOB_QUEUES.NOTIFICATION, // weekly-review reuses the notification queue worker is registered separately
+    queue: JOB_QUEUES.NOTIFICATION,
     jobName: 'weekly-review',
     cron: '0 7 * * 1', // Monday 07:00 (Asia/Jakarta)
     payload: {},
     description: 'Generate weekly review note per user',
-    /** Use a dedicated queue if defined separately. */
+    // weekly-review job is dispatched via the reminder queue's worker
+    // (which routes by job.name). See server/src/jobs/index.ts.
     queueOverride: JOB_QUEUES.REMINDER,
   },
-] as const;
+];
 
 const TZ = 'Asia/Jakarta';
 

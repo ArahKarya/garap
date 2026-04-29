@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TagPicker } from '@/components/TagPicker';
+import { TagFilter } from '@/components/TagFilter';
 
 interface LinkRow {
   id: string;
@@ -167,8 +168,8 @@ export function LinksPage() {
     <div className="space-y-4">
       <PageHeader
         title="Links"
-        description="Bookmark multi-platform dengan metadata otomatis."
-        actions={
+        subtitle="Bookmark multi-platform dengan metadata otomatis."
+        action={
           <div className="flex items-center gap-2">
             <Select
               value={platformFilter}
@@ -206,7 +207,7 @@ export function LinksPage() {
 
       {!linksQuery.isLoading && (!linksQuery.data || linksQuery.data.length === 0) && (
         <Card className="p-8">
-          <EmptyState message="Belum ada link disimpan. Paste URL apa saja, judul & favicon otomatis terisi." />
+          <EmptyState description="Belum ada link disimpan. Paste URL apa saja, judul & favicon otomatis terisi." />
         </Card>
       )}
 
