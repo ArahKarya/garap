@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandPalette';
 import { NotificationBell } from '@/components/NotificationBell';
+import { QuickAddTaskDialog, useQuickAddShortcut } from '@/components/QuickAddTaskDialog';
 import { BRANDING } from '@panggonmikir/shared';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
@@ -158,8 +159,10 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
 
   useCommandPaletteShortcut(setPaletteOpen);
+  useQuickAddShortcut(setQuickAddOpen);
 
   return (
     <div className="flex h-screen bg-background">
@@ -273,6 +276,7 @@ export function AppLayout() {
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <QuickAddTaskDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
     </div>
   );
 }

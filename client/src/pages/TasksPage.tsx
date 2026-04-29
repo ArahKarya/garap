@@ -159,6 +159,7 @@ export function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'ALL'>('ALL');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [view, setView] = useState<ViewMode>('list');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const tasksQuery = useQuery({
     queryKey: ['tasks', view === 'kanban' ? 'all' : statusFilter, selectedTagIds],
@@ -252,6 +253,62 @@ export function TasksPage() {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
+
+  // Bulk operations — fire one HTTP per item, then invalidate. No batch
+  // endpoint on the server side; can revisit if perf becomes an issue.
+  const bulkCompleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.post(`/tasks/${id}/complete`)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success(`${selectedIds.size} task ditandai`);
+      setSelectedIds(new Set());
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.delete(`/tasks/${id}`)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success(`${selectedIds.size} task dipindah ke trash`);
+      setSelectedIds(new Set());
+    },
+  });
+
+  const bulkSetStatusMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: TaskStatus }) => {
+      await Promise.all(ids.map((id) => api.patch(`/tasks/${id}`, { status })));
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success(`${vars.ids.length} task → ${statusLabel[vars.status]}`);
+      setSelectedIds(new Set());
+    },
+  });
+
+  const toggleSelected = (id: string): void => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = (ids: string[]): void => {
+    setSelectedIds((prev) => {
+      // Toggle: if everything visible is already selected, clear; else select all visible.
+      const allSelected = ids.every((id) => prev.has(id));
+      if (allSelected) return new Set();
+      return new Set(ids);
+    });
+  };
 
   const openCreate = (parentId?: string): void => {
     setEditingId(null);
@@ -365,11 +422,42 @@ export function TasksPage() {
 
       <TagFilter selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
 
+      {selectedIds.size > 0 && view === 'list' && (
+        <BulkActionBar
+          count={selectedIds.size}
+          onClear={() => setSelectedIds(new Set())}
+          onComplete={() => bulkCompleteMutation.mutate(Array.from(selectedIds))}
+          onDelete={() => {
+            if (confirm(`Pindahkan ${selectedIds.size} task ke trash?`))
+              bulkDeleteMutation.mutate(Array.from(selectedIds));
+          }}
+          onChangeStatus={(s) =>
+            bulkSetStatusMutation.mutate({ ids: Array.from(selectedIds), status: s })
+          }
+          busy={
+            bulkCompleteMutation.isPending ||
+            bulkDeleteMutation.isPending ||
+            bulkSetStatusMutation.isPending
+          }
+        />
+      )}
+
       {view === 'list' ? (
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all"
+                    checked={
+                      (tasksQuery.data?.length ?? 0) > 0 &&
+                      tasksQuery.data!.every((t) => selectedIds.has(t.id))
+                    }
+                    onChange={() => selectAll((tasksQuery.data ?? []).map((t) => t.id))}
+                  />
+                </TableHead>
                 <TableHead className="w-10" />
                 <TableHead>Judul</TableHead>
                 <TableHead>Project</TableHead>
@@ -383,14 +471,14 @@ export function TasksPage() {
               {tasksQuery.isLoading &&
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   </TableRow>
                 ))}
               {!tasksQuery.isLoading && roots.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={8}>
                     <EmptyState description="Belum ada task. Klik “Tambah Task”." />
                   </TableCell>
                 </TableRow>
@@ -401,6 +489,8 @@ export function TasksPage() {
                   task={t}
                   depth={0}
                   childrenByParent={childrenByParent}
+                  selected={selectedIds}
+                  onToggleSelect={toggleSelected}
                   onComplete={(id) => completeMutation.mutate(id)}
                   onEdit={openEdit}
                   onDelete={(id, title) => {
@@ -577,6 +667,8 @@ interface TaskRowGroupProps {
   task: TaskRow;
   depth: number;
   childrenByParent: Map<string, TaskRow[]>;
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
   onComplete: (id: string) => void;
   onEdit: (t: TaskRow) => void;
   onDelete: (id: string, title: string) => void;
@@ -587,6 +679,8 @@ function TaskRowGroup({
   task: t,
   depth,
   childrenByParent,
+  selected,
+  onToggleSelect,
   onComplete,
   onEdit,
   onDelete,
@@ -596,7 +690,17 @@ function TaskRowGroup({
   const indent = depth * 20;
   return (
     <>
-      <TableRow className={cn(t.status === 'DONE' && 'opacity-60')}>
+      <TableRow
+        className={cn(t.status === 'DONE' && 'opacity-60', selected.has(t.id) && 'bg-accent/40')}
+      >
+        <TableCell>
+          <input
+            type="checkbox"
+            aria-label={`Select ${t.title}`}
+            checked={selected.has(t.id)}
+            onChange={() => onToggleSelect(t.id)}
+          />
+        </TableCell>
         <TableCell>
           <Button
             variant="ghost"
@@ -674,6 +778,8 @@ function TaskRowGroup({
           task={c}
           depth={depth + 1}
           childrenByParent={childrenByParent}
+          selected={selected}
+          onToggleSelect={onToggleSelect}
           onComplete={onComplete}
           onEdit={onEdit}
           onDelete={onDelete}
@@ -681,6 +787,61 @@ function TaskRowGroup({
         />
       ))}
     </>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Floating bar with bulk actions, shown when ≥1 task is selected.
+// ───────────────────────────────────────────────────────────────────────────
+
+interface BulkActionBarProps {
+  count: number;
+  onClear: () => void;
+  onComplete: () => void;
+  onDelete: () => void;
+  onChangeStatus: (status: TaskStatus) => void;
+  busy: boolean;
+}
+
+function BulkActionBar({
+  count,
+  onClear,
+  onComplete,
+  onDelete,
+  onChangeStatus,
+  busy,
+}: BulkActionBarProps) {
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+      <span className="text-sm font-medium">
+        <strong>{count}</strong> task dipilih
+      </span>
+      <div className="ml-auto flex items-center gap-1">
+        <Button size="sm" variant="outline" onClick={onComplete} disabled={busy}>
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          Tandai selesai
+        </Button>
+        <Select onValueChange={(v) => onChangeStatus(v as TaskStatus)}>
+          <SelectTrigger className="h-8 w-36 text-xs" disabled={busy}>
+            <SelectValue placeholder="Pindah status…" />
+          </SelectTrigger>
+          <SelectContent>
+            {TASK_STATUSES.map((s) => (
+              <SelectItem key={s} value={s} className="text-xs">
+                {statusLabel[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="sm" variant="outline" onClick={onDelete} disabled={busy}>
+          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          Hapus
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onClear} disabled={busy}>
+          Batal
+        </Button>
+      </div>
+    </div>
   );
 }
 
