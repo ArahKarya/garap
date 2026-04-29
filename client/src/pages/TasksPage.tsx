@@ -19,6 +19,17 @@ import {
   Columns as KanbanIcon,
   ChevronRight,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+} from '@dnd-kit/core';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/shared/page-header';
@@ -402,28 +413,20 @@ export function TasksPage() {
           </Table>
         </Card>
       ) : (
-        // Kanban — 5 columns horizontal scroll on small screens, grid on lg+.
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {TASK_STATUSES.map((status) => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              tasks={byStatus[status]}
-              loading={tasksQuery.isLoading}
-              onEdit={openEdit}
-              onChangeStatus={(id, s) => setStatusMutation.mutate({ id, status: s })}
-              onAdd={() => {
-                openCreate();
-                // Pre-set status to this column's status.
-                setTimeout(() => setValue('status', status), 0);
-              }}
-              subtaskCountFor={(id) => childrenByParent.get(id)?.length ?? 0}
-              parentTitleFor={(parentId) =>
-                parentId ? (byId.get(parentId)?.title ?? null) : null
-              }
-            />
-          ))}
-        </div>
+        <KanbanBoard
+          byStatus={byStatus}
+          loading={tasksQuery.isLoading}
+          onEdit={openEdit}
+          onChangeStatus={(id, s) => setStatusMutation.mutate({ id, status: s })}
+          onAdd={(status) => {
+            openCreate();
+            setTimeout(() => setValue('status', status), 0);
+          }}
+          subtaskCountFor={(id) => childrenByParent.get(id)?.length ?? 0}
+          parentTitleFor={(parentId) =>
+            parentId ? (byId.get(parentId)?.title ?? null) : null
+          }
+        />
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -682,8 +685,70 @@ function TaskRowGroup({
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Kanban column: shows all tasks in a single status, with quick status select.
+// Kanban: drag-and-drop board across 5 status columns. Cards stay clickable
+// to open the edit dialog; drag is delayed by a small distance so a click
+// doesn't trigger drag.
 // ───────────────────────────────────────────────────────────────────────────
+
+interface KanbanBoardProps {
+  byStatus: Record<TaskStatus, TaskRow[]>;
+  loading: boolean;
+  onEdit: (t: TaskRow) => void;
+  onChangeStatus: (id: string, status: TaskStatus) => void;
+  onAdd: (status: TaskStatus) => void;
+  subtaskCountFor: (id: string) => number;
+  parentTitleFor: (parentId: string | null) => string | null;
+}
+
+function KanbanBoard({
+  byStatus,
+  loading,
+  onEdit,
+  onChangeStatus,
+  onAdd,
+  subtaskCountFor,
+  parentTitleFor,
+}: KanbanBoardProps) {
+  // 6px activation distance — below this is treated as a click, above as drag.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = (e: DragEndEvent): void => {
+    const taskId = e.active.id as string;
+    const overId = e.over?.id as TaskStatus | undefined;
+    if (!overId) return;
+    // Find the dragged task to compare current vs target status.
+    for (const status of TASK_STATUSES) {
+      const task = byStatus[status].find((t) => t.id === taskId);
+      if (task && task.status !== overId) {
+        onChangeStatus(taskId, overId);
+        return;
+      }
+    }
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {TASK_STATUSES.map((status) => (
+          <KanbanColumn
+            key={status}
+            status={status}
+            tasks={byStatus[status]}
+            loading={loading}
+            onEdit={onEdit}
+            onChangeStatus={onChangeStatus}
+            onAdd={() => onAdd(status)}
+            subtaskCountFor={subtaskCountFor}
+            parentTitleFor={parentTitleFor}
+          />
+        ))}
+      </div>
+    </DndContext>
+  );
+}
 
 interface KanbanColumnProps {
   status: TaskStatus;
@@ -706,8 +771,15 @@ function KanbanColumn({
   subtaskCountFor,
   parentTitleFor,
 }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
-    <div className="flex flex-col rounded-lg bg-muted/30 min-h-[200px]">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex flex-col rounded-lg bg-muted/30 min-h-[200px] transition-colors',
+        isOver && 'bg-primary/10 ring-2 ring-primary/40',
+      )}
+    >
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b">
         <div className="flex items-center gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide">
@@ -733,79 +805,104 @@ function KanbanColumn({
             Tidak ada task
           </p>
         )}
-        {tasks.map((t) => {
-          const subCount = subtaskCountFor(t.id);
-          const parentTitle = parentTitleFor(t.parentId);
-          return (
-            <div
-              key={t.id}
-              className={cn(
-                'group rounded-md border bg-card p-2.5 cursor-pointer hover:shadow-sm transition-shadow',
-                'border-l-4',
-                priorityColor[t.priority] ?? 'border-l-muted-foreground/30',
-                t.status === 'DONE' && 'opacity-60',
+        {tasks.map((t) => (
+          <KanbanCard
+            key={t.id}
+            task={t}
+            onEdit={onEdit}
+            onChangeStatus={onChangeStatus}
+            subtaskCount={subtaskCountFor(t.id)}
+            parentTitle={parentTitleFor(t.parentId)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface KanbanCardProps {
+  task: TaskRow;
+  onEdit: (t: TaskRow) => void;
+  onChangeStatus: (id: string, status: TaskStatus) => void;
+  subtaskCount: number;
+  parentTitle: string | null;
+}
+
+function KanbanCard({ task: t, onEdit, onChangeStatus, subtaskCount, parentTitle }: KanbanCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: t.id });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onEdit(t)}
+      className={cn(
+        'group rounded-md border bg-card p-2.5 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow',
+        'border-l-4',
+        priorityColor[t.priority] ?? 'border-l-muted-foreground/30',
+        t.status === 'DONE' && 'opacity-60',
+        isDragging && 'opacity-50 shadow-lg ring-2 ring-primary/40',
+      )}
+    >
+      {parentTitle && (
+        <p className="text-[10px] text-muted-foreground truncate mb-1">↳ {parentTitle}</p>
+      )}
+      <p
+        className={cn(
+          'text-sm font-medium leading-snug line-clamp-3',
+          t.status === 'DONE' && 'line-through',
+        )}
+      >
+        {t.title}
+      </p>
+      <div className="mt-2 flex items-center justify-between gap-1">
+        <div className="flex flex-wrap items-center gap-1">
+          {t.project && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              {t.project.color && (
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: t.project.color }}
+                />
               )}
-              onClick={() => onEdit(t)}
-            >
-              {parentTitle && (
-                <p className="text-[10px] text-muted-foreground truncate mb-1">
-                  ↳ {parentTitle}
-                </p>
-              )}
-              <p
-                className={cn(
-                  'text-sm font-medium leading-snug line-clamp-3',
-                  t.status === 'DONE' && 'line-through',
-                )}
-              >
-                {t.title}
-              </p>
-              <div className="mt-2 flex items-center justify-between gap-1">
-                <div className="flex flex-wrap items-center gap-1">
-                  {t.project && (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                      {t.project.color && (
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: t.project.color }}
-                        />
-                      )}
-                      {t.project.name}
-                    </span>
-                  )}
-                  {subCount > 0 && (
-                    <Badge variant="outline" className="text-[9px] h-4 px-1">
-                      {subCount} sub
-                    </Badge>
-                  )}
-                </div>
-                {t.dueDate && (
-                  <span className="text-[10px]">
-                    <DueBadge iso={t.dueDate} status={t.status} short />
-                  </span>
-                )}
-              </div>
-              {/* Quick status change — stop click propagation so it doesn't open the edit dialog. */}
-              <div onClick={(e) => e.stopPropagation()} className="mt-2">
-                <Select
-                  value={t.status}
-                  onValueChange={(v) => onChangeStatus(t.id, v as TaskStatus)}
-                >
-                  <SelectTrigger className="h-6 text-[10px] px-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TASK_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s} className="text-xs">
-                        {statusLabel[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          );
-        })}
+              {t.project.name}
+            </span>
+          )}
+          {subtaskCount > 0 && (
+            <Badge variant="outline" className="text-[9px] h-4 px-1">
+              {subtaskCount} sub
+            </Badge>
+          )}
+        </div>
+        {t.dueDate && (
+          <span className="text-[10px]">
+            <DueBadge iso={t.dueDate} status={t.status} short />
+          </span>
+        )}
+      </div>
+      {/* Status select stays as a fallback for keyboard / mobile users.
+          stopPropagation prevents the surrounding draggable from intercepting clicks. */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="mt-2"
+      >
+        <Select value={t.status} onValueChange={(v) => onChangeStatus(t.id, v as TaskStatus)}>
+          <SelectTrigger className="h-6 text-[10px] px-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TASK_STATUSES.map((s) => (
+              <SelectItem key={s} value={s} className="text-xs">
+                {statusLabel[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

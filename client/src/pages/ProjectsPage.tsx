@@ -8,7 +8,8 @@ import {
   PROJECT_STATUSES,
   type ProjectStatus,
 } from '@panggonmikir/shared';
-import { Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Pencil, Trash2, ExternalLink } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/shared/page-header';
@@ -202,6 +203,11 @@ export function ProjectsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="inline-flex gap-1">
+                    <Button variant="ghost" size="icon" asChild title="Buka detail">
+                      <RouterLink to={`/projects/${p.id}`}>
+                        <ExternalLink className="h-4 w-4" />
+                      </RouterLink>
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
                       <Pencil className="h-4 w-4" />
                     </Button>

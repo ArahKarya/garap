@@ -8,6 +8,7 @@ import { SettingsPage } from './pages/SettingsPage';
 // Panggon Mikir domain pages
 import { TasksPage } from './pages/TasksPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { LinksPage } from './pages/LinksPage';
 import { TagsPage } from './pages/TagsPage';
 import { NotesPage } from './pages/NotesPage';
@@ -35,6 +36,7 @@ export function App() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="tasks" element={<TasksPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/:id" element={<ProjectDetailPage />} />
         <Route path="links" element={<LinksPage />} />
         <Route path="notes" element={<NotesPage />} />
         <Route path="documents" element={<DocumentsPage />} />
