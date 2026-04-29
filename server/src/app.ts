@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -53,6 +55,23 @@ export function createApp(): Express {
   );
 
   app.use('/api', apiRouter);
+
+  // ─── Serve built client SPA in production ────────────────────────────────
+  // In Docker runtime the built client lives at /app/client/dist. From the
+  // compiled server entry (/app/server/dist/index.js), that's `../../client/dist`.
+  // In dev (tsx running src/), the path resolves identically relative to src.
+  if (isProduction) {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const clientDist = path.resolve(__dirname, '../../client/dist');
+    app.use(express.static(clientDist, { index: false, maxAge: '7d' }));
+    // SPA fallback — anything not matched above falls back to index.html so
+    // React Router handles client-side routes.
+    app.get(/^(?!\/api\/|\/admin\/).*/, (_req, res, next) => {
+      res.sendFile(path.join(clientDist, 'index.html'), (err) => {
+        if (err) next(err);
+      });
+    });
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler);
