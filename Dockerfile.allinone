@@ -1,4 +1,4 @@
-# Multi-stage build: build client + server, run both from 1 image
+# Multi-stage build: build client + server, run both from 1 image.
 # Express serves the built React SPA in production.
 
 # ---- Stage 1: Dependencies ----
@@ -6,7 +6,7 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* .npmrc ./
 COPY packages/shared/package.json ./packages/shared/
 COPY server/package.json ./server/
 COPY client/package.json ./client/
@@ -24,10 +24,11 @@ COPY --from=deps /app/server/node_modules ./server/node_modules
 COPY --from=deps /app/client/node_modules ./client/node_modules
 COPY . .
 
-RUN pnpm --filter @arahkarya/shared build
-RUN pnpm --filter @arahkarya/server prisma:generate
-RUN pnpm --filter @arahkarya/server build
-RUN pnpm --filter @arahkarya/client build
+# Build order: shared → server (needs prisma generate) → client (consumes shared types).
+RUN pnpm --filter @panggonmikir/shared build
+RUN pnpm --filter @panggonmikir/server prisma:generate
+RUN pnpm --filter @panggonmikir/server build
+RUN pnpm --filter @panggonmikir/client build
 
 # ---- Stage 3: Runtime ----
 FROM node:20-alpine AS runtime
@@ -50,7 +51,7 @@ COPY --from=build /app/client/dist ./client/dist
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
-EXPOSE 3001
+EXPOSE 3007
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server/dist/index.js"]
