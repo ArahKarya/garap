@@ -24,7 +24,34 @@ export function createApp(): Express {
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
-  app.use(helmet({ contentSecurityPolicy: isProduction ? undefined : false }));
+  // CSP: relax just enough for Google Identity Services (sign-in popup, avatar
+  // images, OAuth iframe). Helmet default would block accounts.google.com.
+  app.use(
+    helmet({
+      contentSecurityPolicy: isProduction
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              baseUri: ["'self'"],
+              fontSrc: ["'self'", 'https:', 'data:'],
+              formAction: ["'self'"],
+              frameAncestors: ["'self'"],
+              // Google Sign-In popup is rendered in an iframe.
+              frameSrc: ["'self'", 'https://accounts.google.com'],
+              imgSrc: ["'self'", 'data:', 'https://*.googleusercontent.com', 'https:'],
+              objectSrc: ["'none'"],
+              // Google GIS script + supporting JS.
+              scriptSrc: ["'self'", 'https://accounts.google.com', 'https://apis.google.com'],
+              scriptSrcAttr: ["'none'"],
+              styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
+              // Allow XHR to Google for token exchange + favicon proxies for any external link metadata.
+              connectSrc: ["'self'", 'https://accounts.google.com', 'https:'],
+              upgradeInsecureRequests: [],
+            },
+          }
+        : false,
+    }),
+  );
   app.use(compression());
   app.use(
     cors({
