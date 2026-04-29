@@ -22,6 +22,7 @@ import {
   Calendar as CalendarIcon,
 } from 'lucide-react';
 import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandPalette';
+import { NotificationBell } from '@/components/NotificationBell';
 import { BRANDING } from '@panggonmikir/shared';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
@@ -259,9 +260,7 @@ export function AppLayout() {
             >
               <SearchIcon />
             </Button>
-            <Button variant="ghost" size="icon" aria-label="Notifications">
-              <Bell />
-            </Button>
+            <NotificationBell />
             <ThemeToggle />
             <Separator orientation="vertical" className="mx-1 h-6" />
             <UserMenu />

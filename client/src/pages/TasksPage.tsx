@@ -83,6 +83,62 @@ function toDateInput(iso: string | null): string {
   return iso.slice(0, 10);
 }
 
+type DueBucket = 'overdue' | 'today' | 'soon' | 'later' | 'none';
+
+function dueBucket(iso: string | null, status: TaskStatus): DueBucket {
+  if (!iso) return 'none';
+  // Completed / cancelled tasks shouldn't be flagged as overdue.
+  if (status === 'DONE' || status === 'CANCELLED') return 'none';
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const due = new Date(iso);
+  const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const diffDays = Math.round((startOfDue.getTime() - startOfToday.getTime()) / 86400000);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays === 0) return 'today';
+  if (diffDays <= 3) return 'soon';
+  return 'later';
+}
+
+const dueBucketClass: Record<DueBucket, string> = {
+  overdue: 'text-destructive font-medium',
+  today: 'text-warning font-medium',
+  soon: 'text-info',
+  later: 'text-muted-foreground',
+  none: 'text-muted-foreground',
+};
+
+const dueBucketLabel: Record<DueBucket, string> = {
+  overdue: 'Lewat',
+  today: 'Hari ini',
+  soon: '',
+  later: '',
+  none: '',
+};
+
+interface DueBadgeProps {
+  iso: string | null;
+  status: TaskStatus;
+  short?: boolean;
+}
+
+function DueBadge({ iso, status, short = false }: DueBadgeProps) {
+  if (!iso) return <span className="text-muted-foreground">—</span>;
+  const bucket = dueBucket(iso, status);
+  const dt = new Date(iso);
+  const dateText = dt.toLocaleDateString(
+    'id-ID',
+    short ? { day: '2-digit', month: 'short' } : { day: '2-digit', month: 'long', year: 'numeric' },
+  );
+  const tag = dueBucketLabel[bucket];
+  return (
+    <span className={dueBucketClass[bucket]}>
+      {tag ? `${tag} · ` : ''}
+      {dateText}
+    </span>
+  );
+}
+
 type ViewMode = 'list' | 'kanban';
 
 export function TasksPage() {
@@ -583,11 +639,7 @@ function TaskRowGroup({
           <Badge variant={priorityVariant[t.priority] ?? 'outline'}>{t.priority}</Badge>
         </TableCell>
         <TableCell>
-          {t.dueDate ? (
-            new Date(t.dueDate).toLocaleDateString('id-ID')
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
+          <DueBadge iso={t.dueDate} status={t.status} />
         </TableCell>
         <TableCell className="text-right">
           <div className="inline-flex gap-1">
@@ -728,11 +780,8 @@ function KanbanColumn({
                   )}
                 </div>
                 {t.dueDate && (
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(t.dueDate).toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                    })}
+                  <span className="text-[10px]">
+                    <DueBadge iso={t.dueDate} status={t.status} short />
                   </span>
                 )}
               </div>
