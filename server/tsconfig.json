@@ -9,7 +9,12 @@
     "lib": ["ES2022"],
     "types": ["node"],
     "resolveJsonModule": true,
-    "noUncheckedIndexedAccess": false
+    "noUncheckedIndexedAccess": false,
+    // Server is an application, not a library — no consumers need .d.ts.
+    // Avoid TS2742 on Express Router exports whose inferred types pull in
+    // private @types/express-serve-static-core paths.
+    "declaration": false,
+    "declarationMap": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
