@@ -103,18 +103,25 @@ export async function create(input: CreateTaskInput, scope: OwnerScope) {
 }
 
 export async function update(id: string, input: UpdateTaskInput, scope: OwnerScope) {
-  await get(id, scope);
+  const before = await get(id, scope);
   // If status changes to DONE, set completedAt; if it changes to anything
   // else, clear it. If status is omitted, leave completedAt untouched.
   const completedAt =
     input.status === 'DONE' ? new Date() : input.status ? null : undefined;
-  return prisma.task.update({
+  const updated = await prisma.task.update({
     where: { id },
     data: {
       ...input,
       ...(completedAt !== undefined ? { completedAt } : {}),
     },
   });
+
+  // Recurrence: if the transition was → DONE and the task has a recurrence
+  // preset + a dueDate, spawn the next instance.
+  if (before.status !== 'DONE' && updated.status === 'DONE') {
+    await maybeSpawnNextRecurrence(updated, scope);
+  }
+  return updated;
 }
 
 export async function softDelete(id: string, scope: OwnerScope) {
@@ -142,11 +149,111 @@ export async function purge(id: string, scope: OwnerScope) {
 export async function toggleComplete(id: string, scope: OwnerScope) {
   const task = await get(id, scope);
   const isDone = task.status === 'DONE';
-  return prisma.task.update({
+  const updated = await prisma.task.update({
     where: { id },
     data: {
       status: isDone ? 'TODO' : 'DONE',
       completedAt: isDone ? null : new Date(),
     },
   });
+  // Going from not-done → DONE on a recurring task spawns the next instance.
+  if (!isDone) {
+    await maybeSpawnNextRecurrence(updated, scope);
+  }
+  return updated;
+}
+
+// ─── Recurrence engine ───────────────────────────────────────────────────
+
+const RECURRENCE_PRESETS = ['daily', 'weekdays', 'weekly', 'monthly'] as const;
+type RecurrencePreset = (typeof RECURRENCE_PRESETS)[number];
+
+function isRecurrencePreset(v: string | null): v is RecurrencePreset {
+  return v !== null && (RECURRENCE_PRESETS as readonly string[]).includes(v);
+}
+
+/** Compute the next due date given a preset and a base date. */
+function nextDueDate(base: Date, preset: RecurrencePreset): Date {
+  const next = new Date(base);
+  switch (preset) {
+    case 'daily':
+      next.setDate(next.getDate() + 1);
+      return next;
+    case 'weekdays': {
+      // Mon–Fri only — skip Sat/Sun.
+      do {
+        next.setDate(next.getDate() + 1);
+      } while (next.getDay() === 0 || next.getDay() === 6);
+      return next;
+    }
+    case 'weekly':
+      next.setDate(next.getDate() + 7);
+      return next;
+    case 'monthly':
+      next.setMonth(next.getMonth() + 1);
+      return next;
+  }
+}
+
+/**
+ * If `task` has a recurrence preset AND a dueDate, create a fresh sibling
+ * task with the same metadata but the next due date and a TODO status.
+ * Tags from the original task are also copied.
+ *
+ * Best-effort — failures don't block the original update; they're logged
+ * and the user can manually create the next instance.
+ */
+async function maybeSpawnNextRecurrence(
+  task: { id: string; recurrence: string | null; dueDate: Date | null },
+  scope: OwnerScope,
+): Promise<void> {
+  if (!task.recurrence || !isRecurrencePreset(task.recurrence) || !task.dueDate) return;
+  try {
+    const original = await prisma.task.findUniqueOrThrow({
+      where: { id: task.id },
+      select: {
+        title: true,
+        description: true,
+        priority: true,
+        projectId: true,
+        parentId: true,
+        recurrence: true,
+        sortOrder: true,
+      },
+    });
+    const next = await prisma.task.create({
+      data: {
+        ownerId: scope.ownerId,
+        title: original.title,
+        description: original.description,
+        priority: original.priority,
+        projectId: original.projectId,
+        parentId: original.parentId,
+        recurrence: original.recurrence,
+        sortOrder: original.sortOrder,
+        status: 'TODO',
+        dueDate: nextDueDate(task.dueDate, task.recurrence),
+      },
+    });
+    // Carry over tags so the recurring task is still discoverable via the
+    // same filters.
+    const tagIds = await prisma.entityTag.findMany({
+      where: { entityType: 'TASK', entityId: task.id },
+      select: { tagId: true },
+    });
+    if (tagIds.length > 0) {
+      await prisma.entityTag.createMany({
+        data: tagIds.map((t) => ({
+          tagId: t.tagId,
+          entityType: 'TASK',
+          entityId: next.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  } catch (err) {
+    // Log but don't fail the parent operation.
+    // eslint-disable-next-line no-console
+    console.warn('[tasks] failed to spawn recurrence', err);
+  }
 }

@@ -71,9 +71,23 @@ function renderMarkdown(src: string): string {
     .replace(/`([^`]+)`/g, '<code class="rounded bg-muted px-1 py-0.5 text-xs">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // External links — open in new tab.
     .replace(
       /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline">$1</a>',
+    )
+    // Internal app links — backlinks to /tasks, /projects, /links, etc.
+    // Stay in-app (no new tab) so SPA router handles them.
+    .replace(
+      /\[([^\]]+)\]\((\/[^)\s]+)\)/g,
+      '<a href="$2" class="text-primary underline" data-spa-link="true">$1</a>',
+    )
+    // Wikilink syntax `[[Title]]` — rendered as styled inline badge with a
+    // hint that user can search by that title via Cmd+K. Non-clickable
+    // (purely visual signal that this is an entity reference).
+    .replace(
+      /\[\[([^\]]+)\]\]/g,
+      '<span class="inline-flex items-center rounded bg-info/10 px-1.5 py-0.5 text-xs text-info" title="Cari via Cmd+K">🔗 $1</span>',
     );
 }
 
@@ -268,8 +282,7 @@ export function NotesPage() {
               </TabsList>
               <TabsContent value="edit" className="space-y-2">
                 <Label htmlFor="content">
-                  Konten (Markdown — heading <code>#</code>, bold <code>**x**</code>, list{' '}
-                  <code>- item</code>)
+                  Konten (Markdown)
                 </Label>
                 <Textarea
                   id="content"
@@ -277,10 +290,30 @@ export function NotesPage() {
                   className="font-mono text-sm"
                   {...register('content')}
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  Heading <code>#</code> · bold <code>**x**</code> · list{' '}
+                  <code>- item</code> · link <code>[label](https://…)</code> · backlink{' '}
+                  <code>[Tasks](/tasks)</code> · wikilink <code>[[Topic]]</code>
+                </p>
               </TabsContent>
               <TabsContent value="preview">
                 <div
                   className="prose prose-sm max-w-none rounded-md border p-4 text-sm min-h-[300px] dark:prose-invert"
+                  onClick={(e) => {
+                    // Intercept clicks on internal SPA links so we don't
+                    // trigger a full reload. data-spa-link attribute is added
+                    // by the markdown renderer for /-prefixed hrefs.
+                    const target = (e.target as HTMLElement).closest(
+                      'a[data-spa-link="true"]',
+                    ) as HTMLAnchorElement | null;
+                    if (target) {
+                      e.preventDefault();
+                      window.history.pushState(null, '', target.getAttribute('href') ?? '/');
+                      // Trigger React Router popstate listener.
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                      setOpen(false);
+                    }
+                  }}
                   // eslint-disable-next-line react/no-danger
                   dangerouslySetInnerHTML={{
                     __html: renderMarkdown(watch('content') ?? ''),

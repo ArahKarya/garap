@@ -7,6 +7,8 @@ import {
   type CreateTaskInput,
   TASK_STATUSES,
   TASK_PRIORITIES,
+  TASK_RECURRENCES,
+  RECURRENCE_LABELS,
   type TaskStatus,
 } from '@panggonmikir/shared';
 import {
@@ -18,6 +20,7 @@ import {
   List as ListIcon,
   Columns as KanbanIcon,
   ChevronRight,
+  Repeat,
 } from 'lucide-react';
 import {
   DndContext,
@@ -63,6 +66,7 @@ interface TaskRow {
   dueDate: string | null;
   projectId: string | null;
   parentId: string | null;
+  recurrence: string | null;
   project: { id: string; name: string; color: string | null } | null;
   completedAt: string | null;
 }
@@ -206,6 +210,7 @@ export function TasksPage() {
         ...input,
         projectId: input.projectId || null,
         parentId: input.parentId || null,
+        recurrence: input.recurrence || null,
       };
       const res = editingId
         ? await api.patch(`/tasks/${editingId}`, payload)
@@ -331,6 +336,7 @@ export function TasksPage() {
       dueDate: t.dueDate ? new Date(t.dueDate) : null,
       projectId: t.projectId,
       parentId: t.parentId,
+      recurrence: t.recurrence ?? null,
     });
     setOpen(true);
   };
@@ -637,6 +643,32 @@ export function TasksPage() {
             </div>
 
             <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Repeat className="h-3.5 w-3.5" />
+                Pengulangan (opsional)
+              </Label>
+              <Select
+                value={watch('recurrence') ?? 'none'}
+                onValueChange={(v) => setValue('recurrence', v === 'none' ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tidak berulang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Tidak berulang —</SelectItem>
+                  {TASK_RECURRENCES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {RECURRENCE_LABELS[r]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Saat task ditandai selesai, instance baru otomatis dibuat dengan tenggat berikutnya. Butuh tenggat aktif.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label>Tags</Label>
               <TagPicker entityType="TASK" entityId={editingId} />
             </div>
@@ -717,6 +749,12 @@ function TaskRowGroup({
           <div style={{ paddingLeft: indent }} className="flex items-center gap-2">
             {depth > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
             <span className={cn(t.status === 'DONE' && 'line-through')}>{t.title}</span>
+            {t.recurrence && (
+              <Repeat
+                className="h-3 w-3 text-info"
+                aria-label={`Berulang ${t.recurrence}`}
+              />
+            )}
             {children.length > 0 && (
               <Badge variant="outline" className="text-[10px]">
                 {children.length} sub
@@ -1014,11 +1052,14 @@ function KanbanCard({ task: t, onEdit, onChangeStatus, subtaskCount, parentTitle
       )}
       <p
         className={cn(
-          'text-sm font-medium leading-snug line-clamp-3',
+          'text-sm font-medium leading-snug line-clamp-3 flex items-start gap-1.5',
           t.status === 'DONE' && 'line-through',
         )}
       >
-        {t.title}
+        <span className="flex-1">{t.title}</span>
+        {t.recurrence && (
+          <Repeat className="h-3 w-3 text-info shrink-0 mt-0.5" aria-label="recurring" />
+        )}
       </p>
       <div className="mt-2 flex items-center justify-between gap-1">
         <div className="flex flex-wrap items-center gap-1">

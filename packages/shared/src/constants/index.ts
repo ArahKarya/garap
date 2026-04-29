@@ -103,6 +103,19 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
+// Recurrence presets — kept simple (no full RRULE) to dodge UX/parser
+// complexity. When a recurring task is marked DONE, the server creates a
+// new instance with `dueDate` shifted by this preset.
+export const TASK_RECURRENCES = ['daily', 'weekdays', 'weekly', 'monthly'] as const;
+export type TaskRecurrence = (typeof TASK_RECURRENCES)[number];
+
+export const RECURRENCE_LABELS: Record<TaskRecurrence, string> = {
+  daily: 'Setiap hari',
+  weekdays: 'Hari kerja (Sen–Jum)',
+  weekly: 'Mingguan',
+  monthly: 'Bulanan',
+};
+
 export const PROJECT_STATUSES = ['ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED'] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
