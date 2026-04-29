@@ -18,6 +18,16 @@ FROM node:20-alpine AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
+# Vite bakes VITE_* env at build time, not runtime. Pass them as build args
+# from docker-compose.yml so the client bundle has the Google Client ID,
+# API URL, etc. Keep public values only — never the JWT or OAuth secret.
+ARG VITE_API_URL=/api
+ARG VITE_APP_NAME="Panggon Mikir"
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_APP_NAME=$VITE_APP_NAME \
+    VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/server/node_modules ./server/node_modules

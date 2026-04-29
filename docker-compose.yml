@@ -34,6 +34,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.allinone
+      args:
+        # Vite baked at build time. Reuse server-side GOOGLE_CLIENT_ID — same value.
+        VITE_API_URL: /api
+        VITE_APP_NAME: "Panggon Mikir"
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     depends_on:
       postgres:
