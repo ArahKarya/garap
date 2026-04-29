@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Platform models (from ArahKarya skeleton) ─────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?   // nullable — Google OAuth users may not have a local password
+  name          String
+  avatarUrl     String?
+  googleSub     String?   @unique // Google OAuth subject id
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  roles         UserRole[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  uploads       FileUpload[]
+  tasks         Task[]
+  projects      Project[]
+  links         Link[]
+  notes         Note[]
+  documents     Document[]
+  tags          Tag[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userEmail String?
+  action    String
+  entity    String
+  entityId  String?
+  diff      Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String    @default("info")
+  link      String?
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model FileUpload {
+  id           String   @id @default(cuid())
+  userId       String?
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  path         String
+  entity       String?
+  entityId     String?
+  createdAt    DateTime @default(now())
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@map("file_uploads")
+}
+
+// ─── Panggon Mikir domain models ───────────────────────────────────────────
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum LinkPlatform {
+  GOOGLE_DRIVE
+  GITHUB
+  FIGMA
+  NOTION
+  YOUTUBE
+  GENERIC
+}
+
+enum TaggableEntity {
+  TASK
+  PROJECT
+  LINK
+  NOTE
+  DOCUMENT
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  ownerId     String        @map("owner_id")
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  color       String?
+  startDate   DateTime?     @map("start_date")
+  dueDate     DateTime?     @map("due_date")
+  archivedAt  DateTime?     @map("archived_at")
+  deletedAt   DateTime?     @map("deleted_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks      Task[]
+  links      Link[]
+  notes      Note[]
+  documents  Document[]
+  milestones Milestone[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("projects")
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  name        String
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("milestones")
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  ownerId     String       @map("owner_id")
+  projectId   String?      @map("project_id")
+  parentId    String?      @map("parent_id")
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?    @map("due_date")
+  completedAt DateTime?    @map("completed_at")
+  recurrence  String?      // RRULE-lite, null = one-off
+  sortOrder   Int          @default(0) @map("sort_order")
+  deletedAt   DateTime?    @map("deleted_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  owner    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  parent   Task?    @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Task[]   @relation("TaskHierarchy")
+
+  @@index([ownerId])
+  @@index([projectId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([deletedAt])
+  @@map("tasks")
+}
+
+model Link {
+  id             String       @id @default(cuid())
+  ownerId        String       @map("owner_id")
+  projectId      String?      @map("project_id")
+  url            String       @db.Text
+  canonicalUrl   String?      @map("canonical_url") @db.Text
+  title          String
+  description    String?      @db.Text
+  faviconUrl     String?      @map("favicon_url") @db.Text
+  thumbnailUrl   String?      @map("thumbnail_url") @db.Text
+  platform       LinkPlatform @default(GENERIC)
+  notes          String?      @db.Text
+  lastCheckedAt  DateTime?    @map("last_checked_at")
+  isBroken       Boolean      @default(false) @map("is_broken")
+  lastAccessedAt DateTime?    @map("last_accessed_at")
+  accessCount    Int          @default(0) @map("access_count")
+  deletedAt      DateTime?    @map("deleted_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([projectId])
+  @@index([platform])
+  @@index([deletedAt])
+  @@map("links")
+}
+
+model Note {
+  id        String    @id @default(cuid())
+  ownerId   String    @map("owner_id")
+  projectId String?   @map("project_id")
+  title     String
+  content   String    @db.Text
+  pinned    Boolean   @default(false)
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([projectId])
+  @@index([deletedAt])
+  @@map("notes")
+}
+
+model Document {
+  id           String    @id @default(cuid())
+  ownerId      String    @map("owner_id")
+  projectId    String?   @map("project_id")
+  fileUploadId String?   @unique @map("file_upload_id")
+  externalUrl  String?   @map("external_url") @db.Text
+  title        String
+  description  String?
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([projectId])
+  @@index([deletedAt])
+  @@map("documents")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  ownerId   String   @map("owner_id")
+  name      String
+  color     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  owner    User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  taggings EntityTag[]
+
+  @@unique([ownerId, name])
+  @@index([ownerId])
+  @@map("tags")
+}
+
+// Polymorphic tag association — one row per (tag, entityType, entityId).
+model EntityTag {
+  tagId      String         @map("tag_id")
+  entityType TaggableEntity @map("entity_type")
+  entityId   String         @map("entity_id")
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([tagId, entityType, entityId])
+  @@index([entityType, entityId])
+  @@map("entity_tags")
+}
