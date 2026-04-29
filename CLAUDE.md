@@ -8,8 +8,10 @@ Guidance untuk AI assistant (Claude Code) saat bekerja di codebase ini.
 mengelola **task, project, dokumen, link, dan note**. Solo-user, dipakai oleh
 **Yayang Setya Nugroho** (`yayang.nugroho.s@gmail.com`).
 
-- **Domain**: `panggonmikir.arahkarya.com`
-- **Deploy**: RPi5 via Docker Compose
+- **Domain**: `panggonmikir.arahkarya.com` (live via Cloudflare Tunnel)
+- **Deploy**: RPi5 via Docker Compose, exposed via `cloudflared` tunnel
+  (NOT nginx + DNS proxy — nginx exists di RPi5 tapi cuma untuk LAN/localhost).
+  Lihat `docs/DEPLOY.md` untuk arsitektur deploy lengkap.
 - **Auth**: Google OAuth (single user, email allowlist)
 
 Dibangun di atas **ArahKarya Framework** — semua module bawaan (Auth, RBAC, Audit,

@@ -81,12 +81,15 @@ Akses:
 cp .env.docker.example .env
 # EDIT .env (Google OAuth + JWT secrets)
 
-docker compose up -d --build
+./deploy.sh             # build + up + migrate + seed
 docker compose logs -f app
 ```
 
-Akses di http://localhost:3007. Setelah Caddy/nginx routing siap →
-`https://panggonmikir.arahkarya.com`.
+App accessible:
+- `http://localhost:3007` — direct
+- `https://panggonmikir.arahkarya.com` — public via Cloudflare Tunnel
+  (cloudflared needs ingress rule for the hostname; lihat
+  [docs/DEPLOY.md](./docs/DEPLOY.md))
 
 ## Domain Model
 

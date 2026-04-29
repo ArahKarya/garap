@@ -168,5 +168,5 @@ document:read|write|delete
 - [ ] Search global menemukan entity dari satu kotak
 - [ ] Dashboard menampilkan today/upcoming/overdue
 - [ ] Trash bisa restore + purge
-- [ ] Deploy di RPi5, Caddy/nginx routing ke `panggonmikir.arahkarya.com`
+- [x] Deploy di RPi5, public via Cloudflare Tunnel `panggonmikir.arahkarya.com`
 - [ ] Coverage test backend ≥80% untuk service layer

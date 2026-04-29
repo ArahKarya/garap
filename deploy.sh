@@ -11,7 +11,9 @@
 # Prereqs:
 #   - Docker + Docker Compose installed
 #   - .env populated (cp .env.docker.example .env, isi semua)
-#   - Caddy running on RPi5 with route to localhost:3007 (lihat Caddyfile.example)
+#   - Cloudflare Tunnel (cloudflared) running with hostname
+#     panggonmikir.arahkarya.com → http://127.0.0.1:3007 ingress rule.
+#     Lihat docs/DEPLOY.md untuk setup-nya.
 # ============================================================================
 set -euo pipefail
 
