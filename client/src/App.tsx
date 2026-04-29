@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
+import { SharePage } from './pages/SharePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { AuditLogPage } from './pages/AuditLogPage';
@@ -23,6 +24,14 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route
+        path="/share"
+        element={
+          <ProtectedRoute>
+            <SharePage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={

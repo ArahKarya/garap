@@ -96,6 +96,7 @@ export function NotesPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const notesQuery = useQuery({
     queryKey: ['notes', selectedTagIds],
@@ -152,6 +153,42 @@ export function NotesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
   });
 
+  // ── Bulk operations ───────────────────────────────────────────────────
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.delete(`/notes/${id}`)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notes'] });
+      toast.success(`${selectedIds.size} note dipindah ke trash`);
+      setSelectedIds(new Set());
+    },
+  });
+
+  const bulkPinMutation = useMutation({
+    mutationFn: async ({ ids, pin }: { ids: string[]; pin: boolean }) => {
+      await Promise.all(
+        ids.map((id) => api.patch(`/notes/${id}`, { pinned: pin })),
+      );
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['notes'] });
+      toast.success(
+        `${vars.ids.length} note ${vars.pin ? 'di-pin' : 'di-unpin'}`,
+      );
+      setSelectedIds(new Set());
+    },
+  });
+
+  const toggleSelected = (id: string): void => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const openCreate = (): void => {
     setEditingId(null);
     reset({ title: '', content: '', pinned: false });
@@ -179,6 +216,57 @@ export function NotesPage() {
 
       <TagFilter selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
 
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+          <span className="text-sm">
+            <strong>{selectedIds.size}</strong> note dipilih
+          </span>
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                bulkPinMutation.mutate({ ids: Array.from(selectedIds), pin: true })
+              }
+              disabled={bulkPinMutation.isPending}
+            >
+              <Pin className="h-3.5 w-3.5" />
+              Pin
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                bulkPinMutation.mutate({ ids: Array.from(selectedIds), pin: false })
+              }
+              disabled={bulkPinMutation.isPending}
+            >
+              <PinOff className="h-3.5 w-3.5" />
+              Unpin
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (confirm(`Pindahkan ${selectedIds.size} note ke trash?`))
+                  bulkDeleteMutation.mutate(Array.from(selectedIds));
+              }}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              Hapus
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Batal
+            </Button>
+          </div>
+        </div>
+      )}
+
       {notesQuery.isLoading && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -198,11 +286,21 @@ export function NotesPage() {
           {notesQuery.data.map((n) => (
             <Card
               key={n.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className={`group cursor-pointer hover:shadow-md transition-shadow relative ${selectedIds.has(n.id) ? 'ring-2 ring-primary' : ''}`}
               onClick={() => openEdit(n)}
             >
+              <input
+                type="checkbox"
+                aria-label="Select note"
+                checked={selectedIds.has(n.id)}
+                onChange={() => toggleSelected(n.id)}
+                onClick={(e) => e.stopPropagation()}
+                className={`absolute top-2 left-2 z-10 ${
+                  selectedIds.has(n.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                } transition-opacity`}
+              />
               <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2 space-y-0">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pl-5">
                   <h3 className="font-semibold text-sm truncate">{n.title}</h3>
                   {n.project && (
                     <p className="text-xs text-muted-foreground truncate">

@@ -60,6 +60,7 @@ export function LinksPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [platformFilter, setPlatformFilter] = useState<LinkPlatform | 'ALL'>('ALL');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const linksQuery = useQuery({
     queryKey: ['links', platformFilter, selectedTagIds],
@@ -141,6 +142,38 @@ export function LinksPage() {
     },
   });
 
+  // Bulk delete + bulk metadata refresh.
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.delete(`/links/${id}`)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['links'] });
+      toast.success(`${selectedIds.size} link dipindah ke trash`);
+      setSelectedIds(new Set());
+    },
+  });
+
+  const bulkRefreshMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.post(`/links/${id}/refresh-metadata`)));
+    },
+    onSuccess: (_d, ids) => {
+      qc.invalidateQueries({ queryKey: ['links'] });
+      toast.success(`Metadata ${ids.length} link di-refresh`);
+      setSelectedIds(new Set());
+    },
+  });
+
+  const toggleSelected = (id: string): void => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleVisit = (link: LinkRow): void => {
     visitMutation.mutate(link.id);
     window.open(link.url, '_blank', 'noopener,noreferrer');
@@ -197,6 +230,40 @@ export function LinksPage() {
 
       <TagFilter selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
 
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+          <span className="text-sm">
+            <strong>{selectedIds.size}</strong> link dipilih
+          </span>
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => bulkRefreshMutation.mutate(Array.from(selectedIds))}
+              disabled={bulkRefreshMutation.isPending}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh metadata
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (confirm(`Pindahkan ${selectedIds.size} link ke trash?`))
+                  bulkDeleteMutation.mutate(Array.from(selectedIds));
+              }}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              Hapus
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+              Batal
+            </Button>
+          </div>
+        </div>
+      )}
+
       {linksQuery.isLoading && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -214,8 +281,21 @@ export function LinksPage() {
       {linksQuery.data && linksQuery.data.length > 0 && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {linksQuery.data.map((l) => (
-            <Card key={l.id} className="p-4 space-y-2 hover:bg-accent/50 transition-colors">
-              <div className="flex items-start gap-3">
+            <Card
+              key={l.id}
+              className={`group p-4 space-y-2 hover:bg-accent/50 transition-colors relative ${selectedIds.has(l.id) ? 'ring-2 ring-primary' : ''}`}
+            >
+              <input
+                type="checkbox"
+                aria-label="Select link"
+                checked={selectedIds.has(l.id)}
+                onChange={() => toggleSelected(l.id)}
+                onClick={(e) => e.stopPropagation()}
+                className={`absolute top-2 left-2 z-10 ${
+                  selectedIds.has(l.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                } transition-opacity`}
+              />
+              <div className="flex items-start gap-3 pl-5">
                 {l.faviconUrl ? (
                   <img src={l.faviconUrl} alt="" className="h-6 w-6 rounded shrink-0 mt-0.5" />
                 ) : (

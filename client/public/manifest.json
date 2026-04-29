@@ -1,8 +1,9 @@
 {
-  "name": "ArahKarya",
-  "short_name": "ArahKarya",
-  "description": "ERP & Internal Tool Platform",
+  "name": "Panggon Mikir",
+  "short_name": "Panggon Mikir",
+  "description": "Tempat berpikir, mengelola, dan menyimpan",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#2563ab",
@@ -25,6 +26,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "Tambah Task",
+      "short_name": "Task baru",
+      "url": "/tasks?quickAdd=1",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Buka Notes",
+      "short_name": "Notes",
+      "url": "/notes",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
