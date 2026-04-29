@@ -8,6 +8,8 @@ import {
 } from '@panggonmikir/shared';
 import { validate, getValidated } from '../../middleware/validate.js';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
+import { env } from '../../config/env.js';
+import { logger } from '../../lib/logger.js';
 import * as authService from './auth.service.js';
 import * as googleService from './google.service.js';
 
@@ -32,6 +34,47 @@ authRouter.post('/google', validate(googleLoginSchema), async (req, res, next) =
     res.json(ok(result));
   } catch (err) {
     next(err);
+  }
+});
+
+// Google may use server-redirect mode in some browsers (FedCM unavailable, etc.):
+// after the consent screen, Google redirects the browser to GOOGLE_REDIRECT_URI
+// with `?code=...`. Exchange the code, then redirect into the SPA's
+// /auth/callback route with tokens in the URL fragment so the client can
+// hydrate Zustand auth store. Fragment (#) chosen over query (?) because
+// fragments aren't sent in Referer headers or proxy logs.
+authRouter.get('/google/callback', async (req, res, next) => {
+  try {
+    const code = typeof req.query.code === 'string' ? req.query.code : null;
+    const errorParam = typeof req.query.error === 'string' ? req.query.error : null;
+    const appOrigin = env.APP_URL.replace(/\/+$/, '');
+    if (errorParam) {
+      logger.warn({ errorParam }, '[google/callback] Google returned error');
+      return res.redirect(`${appOrigin}/login?error=${encodeURIComponent(errorParam)}`);
+    }
+    if (!code) {
+      return res.redirect(`${appOrigin}/login?error=missing_code`);
+    }
+
+    const { user, tokens } = await googleService.loginWithGoogle(
+      { code },
+      req.ip ?? null,
+      req.headers['user-agent'] ?? null,
+    );
+
+    // Pack into URL fragment — accessToken, refreshToken, base64-encoded user.
+    const userB64 = Buffer.from(JSON.stringify(user)).toString('base64url');
+    const fragment = new URLSearchParams({
+      access: tokens.accessToken,
+      refresh: tokens.refreshToken,
+      expires: String(tokens.expiresIn),
+      user: userB64,
+    }).toString();
+    res.redirect(`${appOrigin}/auth/callback#${fragment}`);
+  } catch (err) {
+    logger.error({ err }, '[google/callback] failed');
+    const appOrigin = env.APP_URL.replace(/\/+$/, '');
+    res.redirect(`${appOrigin}/login?error=auth_failed`);
   }
 });
 
