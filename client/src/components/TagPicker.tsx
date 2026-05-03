@@ -34,25 +34,18 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  if (!entityId) {
-    return (
-      <p className="text-xs text-muted-foreground italic">
-        Tag tersedia setelah disimpan.
-      </p>
-    );
-  }
-
   const allTagsQuery = useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
       const res = await api.get('/tags');
       return res.data.data as Tag[];
     },
-    enabled: popoverOpen, // lazy fetch on first open
+    enabled: popoverOpen && !!entityId, // lazy fetch on first open
   });
 
   const attachedQuery = useQuery({
     queryKey: ['tags', 'by-entity', entityType, entityId],
+    enabled: !!entityId,
     queryFn: async () => {
       const res = await api.get('/tags/by-entity', {
         params: { entityType, entityId },
@@ -114,6 +107,14 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
     (allTagsQuery.data ?? []).some(
       (t) => t.name.toLowerCase() === search.trim().toLowerCase(),
     );
+
+  if (!entityId) {
+    return (
+      <p className="text-xs text-muted-foreground italic">
+        Tag tersedia setelah disimpan.
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">

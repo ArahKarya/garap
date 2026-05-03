@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -137,22 +138,31 @@ export function TagsPage() {
             {tagsQuery.data?.map((t) => (
               <TableRow key={t.id}>
                 <TableCell>
-                  <Badge
-                    variant="outline"
-                    className="text-xs"
-                    style={
-                      t.color
-                        ? {
-                            borderColor: t.color,
-                            color: t.color,
-                          }
-                        : undefined
-                    }
-                  >
-                    {t.name}
-                  </Badge>
+                  <RouterLink to={`/tags/${t.id}`} className="inline-block">
+                    <Badge
+                      variant="outline"
+                      className="text-xs hover:opacity-80 cursor-pointer"
+                      style={
+                        t.color
+                          ? {
+                              borderColor: t.color,
+                              color: t.color,
+                            }
+                          : undefined
+                      }
+                    >
+                      {t.name}
+                    </Badge>
+                  </RouterLink>
                 </TableCell>
-                <TableCell className="text-center">{t._count?.taggings ?? 0}</TableCell>
+                <TableCell className="text-center">
+                  <RouterLink
+                    to={`/tags/${t.id}`}
+                    className="hover:underline"
+                  >
+                    {t._count?.taggings ?? 0}
+                  </RouterLink>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="inline-flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(t)}>

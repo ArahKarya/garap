@@ -97,3 +97,118 @@ export async function listForEntity(
   });
   return taggings.map((t) => t.tag);
 }
+
+/**
+ * Return all entities tagged with the given tag, grouped by entity type and
+ * filtered to the user's ownership. Optionally scoped to a workspace.
+ */
+export async function entitiesForTag(
+  tagId: string,
+  scope: OwnerScope,
+  workspaceId?: string,
+) {
+  const tag = await get(tagId, scope);
+
+  const taggings = await prisma.entityTag.findMany({
+    where: { tagId },
+    select: { entityType: true, entityId: true },
+  });
+  const idsByType = {
+    TASK: [] as string[],
+    PROJECT: [] as string[],
+    LINK: [] as string[],
+    NOTE: [] as string[],
+    DOCUMENT: [] as string[],
+  };
+  for (const t of taggings) {
+    idsByType[t.entityType].push(t.entityId);
+  }
+
+  const wsScope = workspaceId ? { workspaceId } : {};
+
+  const [tasks, projects, links, notes, documents] = await Promise.all([
+    idsByType.TASK.length
+      ? prisma.task.findMany({
+          where: {
+            id: { in: idsByType.TASK },
+            ownerId: scope.ownerId,
+            deletedAt: null,
+            ...wsScope,
+          },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            priority: true,
+            dueDate: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : [],
+    idsByType.PROJECT.length
+      ? prisma.project.findMany({
+          where: {
+            id: { in: idsByType.PROJECT },
+            ownerId: scope.ownerId,
+            deletedAt: null,
+            ...wsScope,
+          },
+          select: { id: true, name: true, status: true, color: true },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : [],
+    idsByType.LINK.length
+      ? prisma.link.findMany({
+          where: {
+            id: { in: idsByType.LINK },
+            ownerId: scope.ownerId,
+            deletedAt: null,
+            ...wsScope,
+          },
+          select: { id: true, title: true, url: true, platform: true, faviconUrl: true },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : [],
+    idsByType.NOTE.length
+      ? prisma.note.findMany({
+          where: {
+            id: { in: idsByType.NOTE },
+            ownerId: scope.ownerId,
+            deletedAt: null,
+            ...wsScope,
+          },
+          select: { id: true, title: true, pinned: true, updatedAt: true },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : [],
+    idsByType.DOCUMENT.length
+      ? prisma.document.findMany({
+          where: {
+            id: { in: idsByType.DOCUMENT },
+            ownerId: scope.ownerId,
+            deletedAt: null,
+            ...wsScope,
+          },
+          select: {
+            id: true,
+            title: true,
+            externalUrl: true,
+            fileUploadId: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : [],
+  ]);
+
+  return {
+    tag,
+    counts: {
+      tasks: tasks.length,
+      projects: projects.length,
+      links: links.length,
+      notes: notes.length,
+      documents: documents.length,
+    },
+    items: { tasks, projects, links, notes, documents },
+  };
+}

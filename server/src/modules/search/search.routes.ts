@@ -8,6 +8,7 @@ import { validate, getValidated } from '../../middleware/validate.js';
 const searchQuerySchema = z.object({
   q: z.string().trim().min(1, 'Query wajib diisi').max(200),
   limit: z.coerce.number().int().positive().max(20).default(8),
+  workspaceId: z.string().optional(),
 });
 
 type SearchQuery = z.infer<typeof searchQuerySchema>;
@@ -30,12 +31,14 @@ searchRouter.get(
       const ownerId = req.user!.id;
       const term = q.q;
       const insensitive = { contains: term, mode: 'insensitive' as const };
+      const wsScope = q.workspaceId ? { workspaceId: q.workspaceId } : {};
 
       const [tasks, projects, links, notes, documents, tags] = await Promise.all([
         prisma.task.findMany({
           where: {
             ownerId,
             deletedAt: null,
+            ...wsScope,
             OR: [{ title: insensitive }, { description: insensitive }],
           },
           take: q.limit,
@@ -46,6 +49,7 @@ searchRouter.get(
           where: {
             ownerId,
             deletedAt: null,
+            ...wsScope,
             OR: [{ name: insensitive }, { description: insensitive }],
           },
           take: q.limit,
@@ -56,6 +60,7 @@ searchRouter.get(
           where: {
             ownerId,
             deletedAt: null,
+            ...wsScope,
             OR: [
               { title: insensitive },
               { description: insensitive },
@@ -71,6 +76,7 @@ searchRouter.get(
           where: {
             ownerId,
             deletedAt: null,
+            ...wsScope,
             OR: [{ title: insensitive }, { content: insensitive }],
           },
           take: q.limit,
@@ -81,6 +87,7 @@ searchRouter.get(
           where: {
             ownerId,
             deletedAt: null,
+            ...wsScope,
             OR: [{ title: insensitive }, { description: insensitive }],
           },
           take: q.limit,

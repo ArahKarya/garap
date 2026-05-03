@@ -39,6 +39,24 @@ tagsRouter.get(
 );
 
 tagsRouter.get(
+  '/:id/entities',
+  requirePermissions(PERMISSIONS.TAG_READ),
+  async (req: AuthenticatedRequest, res, next) => {
+    try {
+      const tagId = req.params.id as string;
+      const workspaceId =
+        typeof req.query.workspaceId === 'string' && req.query.workspaceId.length > 0
+          ? req.query.workspaceId
+          : undefined;
+      const result = await svc.entitiesForTag(tagId, { ownerId: req.user!.id }, workspaceId);
+      res.json(ok(result));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+tagsRouter.get(
   '/by-entity',
   requirePermissions(PERMISSIONS.TAG_READ),
   validate(taggedEntityQuerySchema, 'query'),

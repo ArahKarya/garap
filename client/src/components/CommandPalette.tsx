@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface SearchResults {
@@ -45,6 +46,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
+  const { activeWorkspaceId } = useActiveWorkspace();
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [results, setResults] = useState<SearchResults['results'] | null>(null);
@@ -70,7 +72,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     setLoading(true);
     api
       .get<{ data: SearchResults }>('/search', {
-        params: { q: debounced, limit: 6 },
+        params: {
+          q: debounced,
+          limit: 6,
+          ...(activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {}),
+        },
         signal: controller.signal,
       })
       .then((res) => {
@@ -93,7 +99,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [debounced]);
+  }, [debounced, activeWorkspaceId]);
 
   // Reset state on close.
   useEffect(() => {
@@ -272,7 +278,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   <Command.Item
                     key={t.id}
                     value={`tag-${t.id}`}
-                    onSelect={() => go('/tags')}
+                    onSelect={() => go(`/tags/${t.id}`)}
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
                   >
                     <TagIcon
