@@ -60,7 +60,8 @@ services:
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://panggonmikir.arahkarya.com/api/auth/google/callback}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@panggonmikir.local}
-      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}
+      # Leave blank to skip local-admin seed; set to ≥12 chars to enable.
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
     ports:
       - '${APP_PORT:-3007}:3007'
     volumes:

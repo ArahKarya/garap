@@ -32,9 +32,11 @@ import {
 } from '@/components/ui/select';
 import { TagPicker } from '@/components/TagPicker';
 import { TagFilter } from '@/components/TagFilter';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 
 interface ProjectRow {
   id: string;
+  workspaceId: string;
   name: string;
   description: string | null;
   status: ProjectStatus;
@@ -54,11 +56,14 @@ export function ProjectsPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const { activeWorkspaceId } = useActiveWorkspace();
 
   const projectsQuery = useQuery({
-    queryKey: ['projects', selectedTagIds],
+    queryKey: ['projects', selectedTagIds, activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
       const params: Record<string, string | number> = { limit: 50 };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
       if (selectedTagIds.length > 0) {
         params.tagIds = selectedTagIds.join(',');
       }
@@ -76,7 +81,12 @@ export function ProjectsPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
-    defaultValues: { name: '', status: 'ACTIVE', color: '#2563ab' },
+    defaultValues: {
+      workspaceId: activeWorkspaceId ?? '',
+      name: '',
+      status: 'ACTIVE',
+      color: '#2563ab',
+    },
   });
 
   const upsertMutation = useMutation({
@@ -110,13 +120,19 @@ export function ProjectsPage() {
 
   const openCreate = (): void => {
     setEditingId(null);
-    reset({ name: '', status: 'ACTIVE', color: '#2563ab' });
+    reset({
+      workspaceId: activeWorkspaceId ?? '',
+      name: '',
+      status: 'ACTIVE',
+      color: '#2563ab',
+    });
     setOpen(true);
   };
 
   const openEdit = (p: ProjectRow): void => {
     setEditingId(p.id);
     reset({
+      workspaceId: p.workspaceId ?? activeWorkspaceId ?? '',
       name: p.name,
       description: p.description ?? null,
       status: p.status,
@@ -235,10 +251,14 @@ export function ProjectsPage() {
             <DialogTitle>{editingId ? 'Edit Project' : 'Project Baru'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit((d) => upsertMutation.mutate(d))} className="space-y-4">
+            <input type="hidden" {...register('workspaceId')} />
             <div className="space-y-2">
               <Label htmlFor="name">Nama</Label>
               <Input id="name" autoFocus {...register('name')} />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+              {errors.workspaceId && (
+                <p className="text-xs text-destructive">{errors.workspaceId.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">

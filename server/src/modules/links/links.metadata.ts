@@ -1,5 +1,6 @@
 import type { LinkPlatform } from '@prisma/client';
 import { logger } from '../../lib/logger.js';
+import { isPublicHttpUrl, assertResolvableAsPublic } from '../../lib/url-safety.js';
 
 export interface LinkMetadata {
   title: string;
@@ -66,6 +67,18 @@ export async function fetchMetadata(url: string): Promise<LinkMetadata> {
     canonicalUrl: null,
     platform,
   };
+
+  const safety = isPublicHttpUrl(url);
+  if (!safety.ok || !safety.hostname) {
+    logger.warn({ url, reason: safety.reason }, 'metadata fetch blocked (SSRF guard)');
+    return fallback;
+  }
+  try {
+    await assertResolvableAsPublic(safety.hostname);
+  } catch (err) {
+    logger.warn({ url, err: (err as Error).message }, 'metadata fetch blocked (DNS guard)');
+    return fallback;
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);

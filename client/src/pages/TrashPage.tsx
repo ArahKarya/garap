@@ -8,6 +8,7 @@ import {
   Link as LinkIcon,
   StickyNote,
   FileBox,
+  Briefcase,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -36,6 +37,13 @@ interface TrashGroupConfig {
 }
 
 const groups: TrashGroupConfig[] = [
+  {
+    key: 'workspaces',
+    label: 'Workspaces',
+    icon: Briefcase,
+    endpoint: '/workspaces',
+    labelOf: (i) => i.name ?? '(tanpa nama)',
+  },
   {
     key: 'tasks',
     label: 'Tasks',

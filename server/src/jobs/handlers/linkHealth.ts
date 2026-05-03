@@ -1,6 +1,7 @@
 import type { Processor } from 'bullmq';
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
+import { isPublicHttpUrl, assertResolvableAsPublic } from '../../lib/url-safety.js';
 
 export interface LinkHealthPayload {
   /** Reserved — when set, only check this user's links. Empty = scan all active. */
@@ -12,10 +13,18 @@ export interface LinkHealthPayload {
 const FETCH_TIMEOUT_MS = 10_000;
 
 async function checkLink(url: string): Promise<{ ok: boolean; status: number | null }> {
+  const safety = isPublicHttpUrl(url);
+  if (!safety.ok || !safety.hostname) {
+    return { ok: false, status: null };
+  }
+  try {
+    await assertResolvableAsPublic(safety.hostname);
+  } catch {
+    return { ok: false, status: null };
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    // HEAD first; many sites reject HEAD so fall back to GET.
     let res = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,

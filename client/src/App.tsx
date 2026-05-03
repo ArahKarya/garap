@@ -12,10 +12,12 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { LinksPage } from './pages/LinksPage';
 import { TagsPage } from './pages/TagsPage';
+import { TagDetailPage } from './pages/TagDetailPage';
 import { NotesPage } from './pages/NotesPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 import { TrashPage } from './pages/TrashPage';
 import { CalendarPage } from './pages/CalendarPage';
+import { SearchPage } from './pages/SearchPage';
 import { AppLayout } from './layouts/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -50,6 +52,8 @@ export function App() {
         <Route path="notes" element={<NotesPage />} />
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="tags" element={<TagsPage />} />
+        <Route path="tags/:id" element={<TagDetailPage />} />
+        <Route path="search" element={<SearchPage />} />
         <Route path="trash" element={<TrashPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="audit-logs" element={<AuditLogPage />} />

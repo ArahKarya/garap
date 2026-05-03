@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.4.1] — 2026-05-03
+
+### Search & Tag — UX improvements
+
+- **Dedicated `/search` page** dengan tab per entitas (Tasks/Projects/Links/Notes/Documents/Tags), workspace-scoped, deep-linkable via `?q=...`
+- **Tag detail page `/tags/:id`** — lihat semua entitas yang punya tag tertentu, dikelompokkan per jenis
+- TagsPage: nama tag + count link ke detail page
+- CommandPalette (Cmd+K) sekarang workspace-scoped + tag link arahkan ke detail page
+- Sidebar: tombol "Cari" baru di nav
+
+### Polish
+
+- `setDefault` workspace, `softDelete` workspace, dan `update` workspace yang flip `isDefault` sekarang dibungkus `prisma.$transaction` — tidak ada window race
+- TagPicker: hooks tidak lagi conditional (rules-of-hooks compliant)
+- ESLint + typescript-eslint terinstall + `eslint.config.js` baru; lint script semua workspace berfungsi
+- NotesPage: hapus stale `eslint-disable` comment
+
+## [0.4.0] — 2026-05-03
+
+### Workspace Hierarchy
+
+- New `Workspace` entity sebagai root container per perusahaan/konteks
+- Hierarchy baru: **Workspace → Project → {Task, Link, Note, Document}**
+- `Project.workspaceId` NOT NULL (FK RESTRICT)
+- `Task/Link/Note/Document` punya `workspaceId` langsung (NOT NULL, FK RESTRICT) — orphan tanpa project tetap bisa dimiliki workspace
+- Workspace switcher di sidebar (desktop + mobile) — Zustand persist
+- 3 permission baru: `workspace:read|write|delete`
+- Composite indexes `(owner_id, workspace_id)` + `(owner_id, project_id)` di semua entitas anak
+
+### Security Hardening
+
+- **XSS fix**: NotesPage markdown rendering pakai `marked` + DOMPurify (bukan regex injection)
+- **SSRF guard**: link metadata fetch + health check tolak `localhost`/`127.0.0.1`/`192.168.x`/`172.16-31.x`/`169.254.x`/non-http(s); DNS-resolution check sebelum fetch
+- **Auth rate limiting**: per-IP limiter strict di `/auth/login`, `/auth/google` (20/15min), `/auth/refresh` (30/min)
+- **Document upload validation**: Zod schema untuk multipart fields (workspaceId required); MIME blocklist diperluas (`.html`, `.svg`, `.xml`, scripts); `X-Content-Type-Options: nosniff` di download
+- **Seed admin**: `SEED_ADMIN_PASSWORD` default dihapus; jika kosong → seed di-skip; min 12 char saat di-set; tidak lagi log plaintext
+- **JWT errors**: `TokenExpiredError`/`JsonWebTokenError` di-handle sebagai 401 (sebelumnya bocor 500)
+
+### Search
+
+- `/api/search` sekarang scoped ke workspace aktif
+
+### Testing
+
+- Vitest + supertest setup baru di `server/vitest.config.ts`
+- Test factories di `server/src/test/factories.ts` (createTestUser + cleanup)
+- 34 test untuk: workspace CRUD/scoping, auth boundaries, URL safety guard
+
 ## [0.3.0] — 2026-04-22
 
 ### Progressive Layering

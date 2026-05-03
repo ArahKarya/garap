@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -66,10 +67,14 @@ interface DashboardSummary {
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
+  const { activeWorkspaceId } = useActiveWorkspace();
   const { data, isLoading } = useQuery({
-    queryKey: ['dashboard', 'summary'],
+    queryKey: ['dashboard', 'summary', activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
-      const res = await api.get('/dashboard/summary');
+      const params: Record<string, string> = {};
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
+      const res = await api.get('/dashboard/summary', { params });
       return res.data.data as DashboardSummary;
     },
   });

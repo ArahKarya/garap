@@ -40,6 +40,9 @@ export const PERMISSIONS = {
   JOB_READ: 'job:read',
   JOB_MANAGE: 'job:manage',
   // Domain permissions for Panggon Mikir
+  WORKSPACE_READ: 'workspace:read',
+  WORKSPACE_WRITE: 'workspace:write',
+  WORKSPACE_DELETE: 'workspace:delete',
   TASK_READ: 'task:read',
   TASK_WRITE: 'task:write',
   TASK_DELETE: 'task:delete',

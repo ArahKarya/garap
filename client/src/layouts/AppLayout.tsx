@@ -24,6 +24,7 @@ import {
 import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandPalette';
 import { NotificationBell } from '@/components/NotificationBell';
 import { QuickAddTaskDialog, useQuickAddShortcut } from '@/components/QuickAddTaskDialog';
+import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import { BRANDING } from '@panggonmikir/shared';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
@@ -52,6 +53,7 @@ interface NavItem {
 
 const nav: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: null },
+  { to: '/search', label: 'Cari', icon: SearchIcon, permission: null },
   { to: '/calendar', label: 'Kalender', icon: CalendarIcon, permission: 'task:read' },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare, permission: 'task:read' },
   { to: '/projects', label: 'Projects', icon: FolderKanban, permission: 'project:read' },
@@ -188,6 +190,10 @@ export function AppLayout() {
           )}
         </div>
 
+        <div className="border-b border-sidebar-border p-2">
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
+
         <ScrollArea className="flex-1">
           <SidebarContent collapsed={collapsed} />
         </ScrollArea>
@@ -224,6 +230,9 @@ export function AppLayout() {
               {BRANDING.APP_NAME}
             </SheetTitle>
           </SheetHeader>
+          <div className="border-b border-sidebar-border p-2">
+            <WorkspaceSwitcher />
+          </div>
           <SidebarContent onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>

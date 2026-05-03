@@ -10,6 +10,7 @@ import {
 import { Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -34,14 +35,17 @@ interface QuickAddTaskDialogProps {
  */
 export function QuickAddTaskDialog({ open, onOpenChange }: QuickAddTaskDialogProps) {
   const qc = useQueryClient();
+  const { activeWorkspaceId } = useActiveWorkspace();
 
   const projectsQuery = useQuery({
-    queryKey: ['projects', 'select'],
+    queryKey: ['projects', 'select', activeWorkspaceId],
     queryFn: async () => {
-      const res = await api.get('/projects', { params: { limit: 100 } });
+      const params: Record<string, string | number> = { limit: 100 };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
+      const res = await api.get('/projects', { params });
       return res.data.data as Array<{ id: string; name: string }>;
     },
-    enabled: open,
+    enabled: open && !!activeWorkspaceId,
   });
 
   const {
@@ -53,18 +57,31 @@ export function QuickAddTaskDialog({ open, onOpenChange }: QuickAddTaskDialogPro
     formState: { errors, isSubmitting },
   } = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
-    defaultValues: { title: '', status: 'TODO', priority: 'MEDIUM' },
+    defaultValues: {
+      workspaceId: activeWorkspaceId ?? '',
+      title: '',
+      status: 'TODO',
+      priority: 'MEDIUM',
+    },
   });
 
   // Reset whenever the dialog opens.
   useEffect(() => {
-    if (open) reset({ title: '', status: 'TODO', priority: 'MEDIUM' });
-  }, [open, reset]);
+    if (open) {
+      reset({
+        workspaceId: activeWorkspaceId ?? '',
+        title: '',
+        status: 'TODO',
+        priority: 'MEDIUM',
+      });
+    }
+  }, [open, reset, activeWorkspaceId]);
 
   const createMutation = useMutation({
     mutationFn: async (input: CreateTaskInput) => {
       const res = await api.post('/tasks', {
         ...input,
+        workspaceId: input.workspaceId || activeWorkspaceId || '',
         projectId: input.projectId || null,
       });
       return res.data.data;

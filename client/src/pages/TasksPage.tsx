@@ -35,6 +35,7 @@ import {
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
@@ -59,6 +60,7 @@ import { cn } from '@/lib/utils';
 
 interface TaskRow {
   id: string;
+  workspaceId: string;
   title: string;
   description: string | null;
   status: TaskStatus;
@@ -164,12 +166,14 @@ export function TasksPage() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [view, setView] = useState<ViewMode>('list');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { activeWorkspaceId } = useActiveWorkspace();
 
   const tasksQuery = useQuery({
-    queryKey: ['tasks', view === 'kanban' ? 'all' : statusFilter, selectedTagIds],
+    queryKey: ['tasks', view === 'kanban' ? 'all' : statusFilter, selectedTagIds, activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
       const params: Record<string, string | number | boolean> = { limit: 200 };
-      // Kanban needs every column populated, so always include completed/cancelled.
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
       if (view === 'kanban') {
         params.includeCompleted = true;
       } else if (statusFilter !== 'ALL') {
@@ -185,9 +189,12 @@ export function TasksPage() {
   });
 
   const projectsQuery = useQuery({
-    queryKey: ['projects', 'select'],
+    queryKey: ['projects', 'select', activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
-      const res = await api.get('/projects', { params: { limit: 100 } });
+      const params: Record<string, string | number> = { limit: 100 };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
+      const res = await api.get('/projects', { params });
       return res.data.data as Array<{ id: string; name: string }>;
     },
   });
@@ -201,13 +208,19 @@ export function TasksPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
-    defaultValues: { title: '', status: 'TODO', priority: 'MEDIUM' },
+    defaultValues: {
+      workspaceId: activeWorkspaceId ?? '',
+      title: '',
+      status: 'TODO',
+      priority: 'MEDIUM',
+    },
   });
 
   const upsertMutation = useMutation({
     mutationFn: async (input: CreateTaskInput) => {
       const payload = {
         ...input,
+        workspaceId: input.workspaceId || activeWorkspaceId || '',
         projectId: input.projectId || null,
         parentId: input.parentId || null,
         recurrence: input.recurrence || null,
@@ -318,6 +331,7 @@ export function TasksPage() {
   const openCreate = (parentId?: string): void => {
     setEditingId(null);
     reset({
+      workspaceId: activeWorkspaceId ?? '',
       title: '',
       status: 'TODO',
       priority: 'MEDIUM',
@@ -329,6 +343,7 @@ export function TasksPage() {
   const openEdit = (t: TaskRow): void => {
     setEditingId(t.id);
     reset({
+      workspaceId: t.workspaceId ?? activeWorkspaceId ?? '',
       title: t.title,
       description: t.description ?? null,
       status: t.status,

@@ -3,6 +3,7 @@ export * from './user.js';
 export * from './audit.js';
 export * from './pagination.js';
 export * from './common.js';
+export * from './workspaces.js';
 export * from './tasks.js';
 export * from './projects.js';
 export * from './links.js';

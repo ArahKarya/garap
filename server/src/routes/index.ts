@@ -7,6 +7,7 @@ import { settingsRouter } from '../modules/settings/settings.routes.js';
 import { notificationsRouter } from '../modules/notifications/notifications.routes.js';
 import { healthRouter } from '../modules/health/health.routes.js';
 // Panggon Mikir domain routers
+import { workspacesRouter } from '../modules/workspaces/workspaces.routes.js';
 import { tasksRouter } from '../modules/tasks/tasks.routes.js';
 import { projectsRouter } from '../modules/projects/projects.routes.js';
 import { linksRouter } from '../modules/links/links.routes.js';
@@ -27,6 +28,7 @@ apiRouter.use('/audit-logs', auditRouter);
 apiRouter.use('/settings', settingsRouter);
 apiRouter.use('/notifications', notificationsRouter);
 // ─── Panggon Mikir domain ────────────────────────────────────────────────
+apiRouter.use('/workspaces', workspacesRouter);
 apiRouter.use('/tasks', tasksRouter);
 apiRouter.use('/projects', projectsRouter);
 apiRouter.use('/links', linksRouter);

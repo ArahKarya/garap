@@ -50,7 +50,17 @@ async function seedRoles() {
 
 async function seedAdminUser(superAdminRoleId: string) {
   const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@panggonmikir.local';
-  const password = process.env.SEED_ADMIN_PASSWORD ?? 'admin123';
+  const password = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!password) {
+    console.log('[seed] SEED_ADMIN_PASSWORD not set — skipping local admin user');
+    return;
+  }
+  if (password.length < 12) {
+    console.error('[seed] SEED_ADMIN_PASSWORD must be at least 12 chars; aborting admin seed');
+    return;
+  }
+
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.upsert({
@@ -70,7 +80,7 @@ async function seedAdminUser(superAdminRoleId: string) {
     create: { userId: user.id, roleId: superAdminRoleId },
   });
 
-  console.log(`[seed] admin user ready: ${email} / ${password}`);
+  console.log(`[seed] admin user ready: ${email}`);
 }
 
 async function seedSettings() {

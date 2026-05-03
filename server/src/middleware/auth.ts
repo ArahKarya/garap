@@ -44,7 +44,17 @@ export const authenticate: RequestHandler = async (req: AuthenticatedRequest, _r
     };
     next();
   } catch (err) {
-    next(err instanceof Error && err.name === 'JsonWebTokenError' ? UnauthorizedError('Token tidak valid') : err);
+    if (err instanceof Error) {
+      if (err.name === 'TokenExpiredError') {
+        next(UnauthorizedError('Token kadaluarsa'));
+        return;
+      }
+      if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+        next(UnauthorizedError('Token tidak valid'));
+        return;
+      }
+    }
+    next(err);
   }
 };
 

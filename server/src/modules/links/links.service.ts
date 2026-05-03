@@ -18,6 +18,8 @@ function buildWhere(q: LinkListQuery, scope: OwnerScope): Prisma.LinkWhereInput 
   }
   if (q.platform) where.platform = q.platform;
   if (q.projectId) where.projectId = q.projectId;
+
+  if (q.workspaceId) where.workspaceId = q.workspaceId;
   if (q.search) {
     where.OR = [
       { title: { contains: q.search, mode: 'insensitive' } },
@@ -66,9 +68,19 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateLinkInput, scope: OwnerScope) {
+  const workspace = await prisma.workspace.findFirst({
+    where: { id: input.workspaceId, ownerId: scope.ownerId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!workspace) throw NotFoundError('Workspace', input.workspaceId);
   if (input.projectId) {
     const project = await prisma.project.findFirst({
-      where: { id: input.projectId, ownerId: scope.ownerId, deletedAt: null },
+      where: {
+        id: input.projectId,
+        ownerId: scope.ownerId,
+        workspaceId: input.workspaceId,
+        deletedAt: null,
+      },
       select: { id: true },
     });
     if (!project) throw NotFoundError('Project', input.projectId);
@@ -78,6 +90,7 @@ export async function create(input: CreateLinkInput, scope: OwnerScope) {
   return prisma.link.create({
     data: {
       ownerId: scope.ownerId,
+      workspaceId: input.workspaceId,
       url: input.url,
       canonicalUrl: meta.canonicalUrl,
       title: input.title?.trim() || meta.title,
@@ -92,10 +105,15 @@ export async function create(input: CreateLinkInput, scope: OwnerScope) {
 }
 
 export async function update(id: string, input: UpdateLinkInput, scope: OwnerScope) {
-  await get(id, scope);
+  const link = await get(id, scope);
   if (input.projectId) {
     const project = await prisma.project.findFirst({
-      where: { id: input.projectId, ownerId: scope.ownerId, deletedAt: null },
+      where: {
+        id: input.projectId,
+        ownerId: scope.ownerId,
+        workspaceId: link.workspaceId,
+        deletedAt: null,
+      },
       select: { id: true },
     });
     if (!project) throw NotFoundError('Project', input.projectId);

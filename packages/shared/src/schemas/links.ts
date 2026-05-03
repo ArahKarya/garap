@@ -1,8 +1,26 @@
 import { z } from 'zod';
 import { LINK_PLATFORMS } from '../constants/index.js';
 
+const PRIVATE_HOST_REGEX =
+  /^(localhost|.+\.(local|lan|internal)|127\.|10\.|0\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/i;
+
+const publicUrlSchema = z
+  .string()
+  .url('URL tidak valid')
+  .max(2000)
+  .refine((u) => /^https?:\/\//i.test(u), 'Hanya http(s) yang diizinkan')
+  .refine((u) => {
+    try {
+      const host = new URL(u).hostname.toLowerCase();
+      return !PRIVATE_HOST_REGEX.test(host);
+    } catch {
+      return false;
+    }
+  }, 'Hostname privat/loopback tidak diizinkan');
+
 export const createLinkSchema = z.object({
-  url: z.string().url('URL tidak valid').max(2000),
+  workspaceId: z.string().min(1, 'Workspace wajib dipilih'),
+  url: publicUrlSchema,
   title: z.string().trim().max(500).optional(),
   description: z.string().trim().max(5000).optional().nullable(),
   notes: z.string().trim().max(5000).optional().nullable(),
@@ -23,6 +41,7 @@ export const linkListQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().trim().optional(),
   platform: z.enum(LINK_PLATFORMS).optional(),
+  workspaceId: z.string().optional(),
   projectId: z.string().cuid().optional(),
   includeDeleted: z.coerce.boolean().optional().default(false),
   deletedOnly: z.coerce.boolean().optional().default(false),

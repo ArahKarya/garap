@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Loader2, Link as LinkIcon, StickyNote, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -53,9 +54,12 @@ export function SharePage() {
   // Auto-create + redirect immediately if we have enough data and the user
   // landed here from a share intent. This makes "share to Panggon Mikir"
   // feel one-tap. If creation fails, fall through to the manual form.
+  const { activeWorkspaceId } = useActiveWorkspace();
   const linkMutation = useMutation({
     mutationFn: async () => {
+      if (!activeWorkspaceId) throw new Error('Workspace belum aktif');
       const res = await api.post('/links', {
+        workspaceId: activeWorkspaceId,
         url,
         title: title || undefined,
         notes: body || undefined,
@@ -71,8 +75,10 @@ export function SharePage() {
 
   const noteMutation = useMutation({
     mutationFn: async () => {
+      if (!activeWorkspaceId) throw new Error('Workspace belum aktif');
       const noteTitle = title || (body ? body.slice(0, 80) : 'Catatan dari share');
       const res = await api.post('/notes', {
+        workspaceId: activeWorkspaceId,
         title: noteTitle,
         content: body,
       });

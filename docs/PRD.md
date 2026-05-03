@@ -1,8 +1,9 @@
 # PRD — Panggon Mikir v1.0
 
 **Pemilik**: Yayang Setya Nugroho
-**Tanggal**: 2026-04-28
-**Status**: Phase 1 — In progress
+**Tanggal**: 2026-04-28 (rev 2026-05-03)
+**Status**: Phase 1 + Phase 2 selesai (workspace, notes, documents).
+Phase 3 sebagian (calendar, share-target, weekly review worker, link health).
 
 ## 1. Visi
 

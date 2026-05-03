@@ -96,10 +96,22 @@ export function createApp(): Express {
   if (isProduction) {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const clientDist = path.resolve(__dirname, '../../client/dist');
-    app.use(express.static(clientDist, { index: false, maxAge: '7d' }));
+    app.use(
+      express.static(clientDist, {
+        index: false,
+        maxAge: '7d',
+        setHeaders: (res, filePath) => {
+          const base = path.basename(filePath);
+          if (base === 'sw.js' || base === 'manifest.json') {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          }
+        },
+      }),
+    );
     // SPA fallback — anything not matched above falls back to index.html so
     // React Router handles client-side routes.
     app.get(/^(?!\/api\/|\/admin\/).*/, (_req, res, next) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.sendFile(path.join(clientDist, 'index.html'), (err) => {
         if (err) next(err);
       });

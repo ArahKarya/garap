@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TASK_STATUSES, TASK_PRIORITIES } from '../constants/index.js';
 
 export const createTaskSchema = z.object({
+  workspaceId: z.string().min(1, 'Workspace wajib dipilih'),
   title: z.string().trim().min(1, 'Judul wajib diisi').max(300),
   description: z.string().trim().max(5000).optional().nullable(),
   status: z.enum(TASK_STATUSES).default('TODO'),
@@ -21,6 +22,7 @@ export const taskListQuerySchema = z.object({
   search: z.string().trim().optional(),
   status: z.enum(TASK_STATUSES).optional(),
   priority: z.enum(TASK_PRIORITIES).optional(),
+  workspaceId: z.string().optional(),
   projectId: z.string().cuid().optional(),
   parentId: z.string().cuid().optional(),
   dueBefore: z.coerce.date().optional(),

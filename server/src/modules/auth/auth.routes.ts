@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { ok } from '@panggonmikir/shared';
 import {
   changePasswordSchema,
@@ -15,6 +16,25 @@ import * as googleService from './google.service.js';
 
 export const authRouter = Router();
 
+// Strict per-IP rate limit on credential/exchange endpoints to deter
+// brute-force and token-replay attempts. The global /api limiter (300/min)
+// kicks in on top of this — these are the inner gate.
+const credentialLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMITED', message: 'Terlalu banyak percobaan. Coba lagi nanti.' } },
+});
+
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMITED', message: 'Terlalu banyak refresh. Coba lagi nanti.' } },
+});
+
 // ─── Google OAuth ─────────────────────────────────────────────────────────
 // GET  /api/auth/google         — returns the Google consent URL the SPA opens
 // POST /api/auth/google         — body: { idToken } OR { code }; returns tokens
@@ -23,7 +43,7 @@ authRouter.get('/google', (req, res) => {
   res.json(ok({ url: googleService.buildAuthUrl(state) }));
 });
 
-authRouter.post('/google', validate(googleLoginSchema), async (req, res, next) => {
+authRouter.post('/google', credentialLimiter, validate(googleLoginSchema), async (req, res, next) => {
   try {
     const input = getValidated<import('@panggonmikir/shared').GoogleLoginInput>(req);
     const result = await googleService.loginWithGoogle(
@@ -78,7 +98,7 @@ authRouter.get('/google/callback', async (req, res, next) => {
   }
 });
 
-authRouter.post('/login', validate(loginSchema), async (req, res, next) => {
+authRouter.post('/login', credentialLimiter, validate(loginSchema), async (req, res, next) => {
   try {
     const input = getValidated<import('@panggonmikir/shared').LoginInput>(req);
     const result = await authService.login(
@@ -92,7 +112,7 @@ authRouter.post('/login', validate(loginSchema), async (req, res, next) => {
   }
 });
 
-authRouter.post('/refresh', validate(refreshTokenSchema), async (req, res, next) => {
+authRouter.post('/refresh', refreshLimiter, validate(refreshTokenSchema), async (req, res, next) => {
   try {
     const { refreshToken } = getValidated<{ refreshToken: string }>(req);
     const result = await authService.refresh(refreshToken);

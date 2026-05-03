@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,11 +62,14 @@ export function LinksPage() {
   const [platformFilter, setPlatformFilter] = useState<LinkPlatform | 'ALL'>('ALL');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { activeWorkspaceId } = useActiveWorkspace();
 
   const linksQuery = useQuery({
-    queryKey: ['links', platformFilter, selectedTagIds],
+    queryKey: ['links', platformFilter, selectedTagIds, activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
       const params: Record<string, string | number> = { limit: 50 };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
       if (platformFilter !== 'ALL') params.platform = platformFilter;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
       const res = await api.get('/links', { params });
@@ -76,7 +80,7 @@ export function LinksPage() {
   // Use createLinkSchema for create, updateLinkSchema for edit (no url field on edit).
   const createForm = useForm<CreateLinkInput>({
     resolver: zodResolver(createLinkSchema),
-    defaultValues: { url: '' },
+    defaultValues: { workspaceId: activeWorkspaceId ?? '', url: '' },
   });
 
   const editForm = useForm<UpdateLinkInput>({
@@ -85,7 +89,8 @@ export function LinksPage() {
 
   const createMutation = useMutation({
     mutationFn: async (input: CreateLinkInput) => {
-      const res = await api.post('/links', input);
+      const payload = { ...input, workspaceId: input.workspaceId || activeWorkspaceId || '' };
+      const res = await api.post('/links', payload);
       return res.data.data;
     },
     onSuccess: () => {

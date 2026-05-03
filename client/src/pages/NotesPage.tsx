@@ -6,6 +6,7 @@ import { createNoteSchema, type CreateNoteInput } from '@panggonmikir/shared';
 import { Plus, Loader2, Pin, PinOff, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,66 +30,45 @@ interface NoteRow {
   project: { id: string; name: string; color: string | null } | null;
 }
 
-/** Minimal markdown → HTML — escape, then render headings, bold, italic, code, links, lists.
- * Not a full markdown parser; good enough for personal notes preview. */
-function renderMarkdown(src: string): string {
-  const escaped = src
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  const lines = escaped.split('\n');
-  const out: string[] = [];
-  let inList = false;
-  for (const raw of lines) {
-    const line = raw;
-    if (/^\s*[-*]\s+/.test(line)) {
-      if (!inList) {
-        out.push('<ul class="list-disc pl-5 my-2 space-y-1">');
-        inList = true;
-      }
-      out.push(`<li>${line.replace(/^\s*[-*]\s+/, '')}</li>`);
-      continue;
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+
+marked.setOptions({ breaks: true, gfm: true });
+
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A') {
+    const href = node.getAttribute('href') ?? '';
+    if (/^https?:\/\//i.test(href)) {
+      node.setAttribute('target', '_blank');
+      node.setAttribute('rel', 'noopener noreferrer');
     }
-    if (inList) {
-      out.push('</ul>');
-      inList = false;
-    }
-    if (/^### /.test(line)) {
-      out.push(`<h3 class="text-base font-semibold mt-3 mb-1">${line.replace(/^### /, '')}</h3>`);
-    } else if (/^## /.test(line)) {
-      out.push(`<h2 class="text-lg font-semibold mt-4 mb-2">${line.replace(/^## /, '')}</h2>`);
-    } else if (/^# /.test(line)) {
-      out.push(`<h1 class="text-xl font-bold mt-4 mb-2">${line.replace(/^# /, '')}</h1>`);
-    } else if (line.trim() === '') {
-      out.push('<div class="h-2"></div>');
-    } else {
-      out.push(`<p class="my-1 leading-relaxed">${line}</p>`);
-    }
+    node.classList.add('text-primary', 'underline');
   }
-  if (inList) out.push('</ul>');
-  return out
-    .join('')
-    .replace(/`([^`]+)`/g, '<code class="rounded bg-muted px-1 py-0.5 text-xs">$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    // External links — open in new tab.
-    .replace(
-      /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline">$1</a>',
-    )
-    // Internal app links — backlinks to /tasks, /projects, /links, etc.
-    // Stay in-app (no new tab) so SPA router handles them.
-    .replace(
-      /\[([^\]]+)\]\((\/[^)\s]+)\)/g,
-      '<a href="$2" class="text-primary underline" data-spa-link="true">$1</a>',
-    )
-    // Wikilink syntax `[[Title]]` — rendered as styled inline badge with a
-    // hint that user can search by that title via Cmd+K. Non-clickable
-    // (purely visual signal that this is an entity reference).
-    .replace(
-      /\[\[([^\]]+)\]\]/g,
-      '<span class="inline-flex items-center rounded bg-info/10 px-1.5 py-0.5 text-xs text-info" title="Cari via Cmd+K">🔗 $1</span>',
+  if (node.tagName === 'SPAN' && node.classList.contains('wikilink')) {
+    node.classList.add(
+      'inline-flex', 'items-center', 'rounded', 'bg-info/10',
+      'px-1.5', 'py-0.5', 'text-xs', 'text-info',
     );
+  }
+});
+
+function renderMarkdown(src: string): string {
+  const wikilinkExpanded = src.replace(
+    /\[\[([^\]]+)\]\]/g,
+    (_, title: string) =>
+      `<span class="wikilink" data-title="${title.replace(/"/g, '&quot;')}">🔗 ${title}</span>`,
+  );
+  const html = marked.parse(wikilinkExpanded, { async: false }) as string;
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'em', 'code', 'pre', 'blockquote',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li', 'a', 'span', 'hr', 'del', 's',
+    ],
+    ALLOWED_ATTR: ['href', 'class', 'target', 'rel', 'title', 'data-title', 'data-spa-link'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/)/i,
+    ADD_ATTR: ['target'],
+  });
 }
 
 export function NotesPage() {
@@ -97,11 +77,14 @@ export function NotesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { activeWorkspaceId } = useActiveWorkspace();
 
   const notesQuery = useQuery({
-    queryKey: ['notes', selectedTagIds],
+    queryKey: ['notes', selectedTagIds, activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
       const params: Record<string, string | number> = { limit: 50 };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
       const res = await api.get('/notes', { params });
       return res.data.data as NoteRow[];
@@ -116,14 +99,20 @@ export function NotesPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateNoteInput>({
     resolver: zodResolver(createNoteSchema),
-    defaultValues: { title: '', content: '', pinned: false },
+    defaultValues: {
+      workspaceId: activeWorkspaceId ?? '',
+      title: '',
+      content: '',
+      pinned: false,
+    },
   });
 
   const upsertMutation = useMutation({
     mutationFn: async (input: CreateNoteInput) => {
+      const payload = { ...input, workspaceId: input.workspaceId || activeWorkspaceId || '' };
       const res = editingId
-        ? await api.patch(`/notes/${editingId}`, input)
-        : await api.post('/notes', input);
+        ? await api.patch(`/notes/${editingId}`, payload)
+        : await api.post('/notes', payload);
       return res.data.data;
     },
     onSuccess: () => {
@@ -412,7 +401,6 @@ export function NotesPage() {
                       setOpen(false);
                     }
                   }}
-                  // eslint-disable-next-line react/no-danger
                   dangerouslySetInnerHTML={{
                     __html: renderMarkdown(watch('content') ?? ''),
                   }}

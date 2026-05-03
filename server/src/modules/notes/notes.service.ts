@@ -17,6 +17,8 @@ function buildWhere(q: NoteListQuery, scope: OwnerScope): Prisma.NoteWhereInput 
   }
   if (q.projectId) where.projectId = q.projectId;
   if (q.pinned !== undefined) where.pinned = q.pinned;
+
+  if (q.workspaceId) where.workspaceId = q.workspaceId;
   if (q.search) {
     where.OR = [
       { title: { contains: q.search, mode: 'insensitive' } },
@@ -67,9 +69,19 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateNoteInput, scope: OwnerScope) {
+  const workspace = await prisma.workspace.findFirst({
+    where: { id: input.workspaceId, ownerId: scope.ownerId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!workspace) throw NotFoundError('Workspace', input.workspaceId);
   if (input.projectId) {
     const project = await prisma.project.findFirst({
-      where: { id: input.projectId, ownerId: scope.ownerId, deletedAt: null },
+      where: {
+        id: input.projectId,
+        ownerId: scope.ownerId,
+        workspaceId: input.workspaceId,
+        deletedAt: null,
+      },
       select: { id: true },
     });
     if (!project) throw NotFoundError('Project', input.projectId);
@@ -80,10 +92,15 @@ export async function create(input: CreateNoteInput, scope: OwnerScope) {
 }
 
 export async function update(id: string, input: UpdateNoteInput, scope: OwnerScope) {
-  await get(id, scope);
+  const note = await get(id, scope);
   if (input.projectId) {
     const project = await prisma.project.findFirst({
-      where: { id: input.projectId, ownerId: scope.ownerId, deletedAt: null },
+      where: {
+        id: input.projectId,
+        ownerId: scope.ownerId,
+        workspaceId: note.workspaceId,
+        deletedAt: null,
+      },
       select: { id: true },
     });
     if (!project) throw NotFoundError('Project', input.projectId);

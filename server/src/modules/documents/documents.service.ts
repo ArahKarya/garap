@@ -37,6 +37,8 @@ function buildWhere(
   if (q.projectId) where.projectId = q.projectId;
   if (q.sourceType === 'UPLOAD') where.fileUploadId = { not: null };
   if (q.sourceType === 'EXTERNAL') where.externalUrl = { not: null };
+
+  if (q.workspaceId) where.workspaceId = q.workspaceId;
   if (q.search) {
     where.OR = [
       { title: { contains: q.search, mode: 'insensitive' } },
@@ -48,14 +50,23 @@ function buildWhere(
 
 async function ensureProjectOwnership(
   projectId: string | null | undefined,
+  workspaceId: string,
   scope: OwnerScope,
 ): Promise<void> {
   if (!projectId) return;
   const project = await prisma.project.findFirst({
-    where: { id: projectId, ownerId: scope.ownerId, deletedAt: null },
+    where: { id: projectId, ownerId: scope.ownerId, workspaceId, deletedAt: null },
     select: { id: true },
   });
   if (!project) throw NotFoundError('Project', projectId);
+}
+
+async function ensureWorkspaceOwnership(workspaceId: string, scope: OwnerScope): Promise<void> {
+  const ws = await prisma.workspace.findFirst({
+    where: { id: workspaceId, ownerId: scope.ownerId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!ws) throw NotFoundError('Workspace', workspaceId);
 }
 
 export async function list(q: DocumentListQuery, scope: OwnerScope) {
@@ -114,11 +125,12 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function createFromUpload(
-  meta: { title: string; description?: string | null; projectId?: string | null },
+  meta: { workspaceId: string; title: string; description?: string | null; projectId?: string | null },
   upload: UploadInfo,
   scope: OwnerScope,
 ) {
-  await ensureProjectOwnership(meta.projectId, scope);
+  await ensureWorkspaceOwnership(meta.workspaceId, scope);
+  await ensureProjectOwnership(meta.projectId, meta.workspaceId, scope);
   const fileUpload = await prisma.fileUpload.create({
     data: {
       userId: scope.ownerId,
@@ -133,6 +145,7 @@ export async function createFromUpload(
   const document = await prisma.document.create({
     data: {
       ownerId: scope.ownerId,
+      workspaceId: meta.workspaceId,
       title: meta.title,
       description: meta.description ?? null,
       projectId: meta.projectId ?? null,
@@ -151,10 +164,12 @@ export async function createFromExternal(
   input: CreateExternalDocumentInput,
   scope: OwnerScope,
 ) {
-  await ensureProjectOwnership(input.projectId, scope);
+  await ensureWorkspaceOwnership(input.workspaceId, scope);
+  await ensureProjectOwnership(input.projectId, input.workspaceId, scope);
   return prisma.document.create({
     data: {
       ownerId: scope.ownerId,
+      workspaceId: input.workspaceId,
       title: input.title,
       description: input.description ?? null,
       externalUrl: input.externalUrl,
@@ -164,8 +179,8 @@ export async function createFromExternal(
 }
 
 export async function update(id: string, input: UpdateDocumentInput, scope: OwnerScope) {
-  await get(id, scope);
-  await ensureProjectOwnership(input.projectId, scope);
+  const item = await get(id, scope);
+  await ensureProjectOwnership(input.projectId, item.workspaceId, scope);
   return prisma.document.update({ where: { id }, data: input });
 }
 

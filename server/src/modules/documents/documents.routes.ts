@@ -9,6 +9,7 @@ import {
   createExternalDocumentSchema,
   updateDocumentSchema,
   documentListQuerySchema,
+  uploadDocumentMetaSchema,
   type CreateExternalDocumentInput,
   type UpdateDocumentInput,
   type DocumentListQuery,
@@ -37,10 +38,12 @@ const upload = multer({
   storage,
   limits: { fileSize: env.UPLOAD_MAX_SIZE_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    // Reject obviously dangerous extensions; mimetype is unreliable.
-    const blocked = /\.(exe|bat|cmd|sh|ps1|app|dmg)$/i;
+    // Reject dangerous extensions: native executables, scripts, and types
+    // that browsers may interpret/render (XSS) when served from same origin.
+    const blocked =
+      /\.(exe|bat|cmd|com|scr|cpl|msi|sh|bash|zsh|ps1|psm1|vbs|wsh|jar|app|dmg|deb|rpm|html?|svg|xml|xhtml|js|mjs|cjs|php|phtml|jsp|asp|aspx|py|rb|pl|cgi)$/i;
     if (blocked.test(file.originalname)) {
-      cb(new Error('File type tidak diizinkan'));
+      cb(new Error('Tipe file tidak diizinkan'));
       return;
     }
     cb(null, true);
@@ -105,13 +108,26 @@ documentsRouter.post(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       if (!req.file) throw ValidationError('File wajib di-attach');
-      const title = (req.body.title ?? req.file.originalname).toString().trim();
+      const parsed = uploadDocumentMetaSchema.safeParse({
+        workspaceId: req.body.workspaceId,
+        title: req.body.title,
+        description: req.body.description,
+        projectId: req.body.projectId,
+      });
+      if (!parsed.success) {
+        throw ValidationError('Validasi gagal', parsed.error.flatten());
+      }
+      const meta = parsed.data;
+      const title = (meta.title ?? req.file.originalname).trim();
       if (!title) throw ValidationError('Judul wajib diisi');
-      const description = req.body.description?.toString().trim() || null;
-      const projectId = req.body.projectId?.toString() || null;
 
       const created = await svc.createFromUpload(
-        { title, description, projectId },
+        {
+          workspaceId: meta.workspaceId,
+          title,
+          description: meta.description ?? null,
+          projectId: meta.projectId ?? null,
+        },
         {
           originalName: req.file.originalname,
           storedName: req.file.filename,
@@ -196,6 +212,7 @@ documentsRouter.get(
       const file = await svc.resolveDownload(req.params.id as string, { ownerId: req.user!.id });
       res.setHeader('Content-Type', file.mimeType);
       res.setHeader('Content-Length', String(file.size));
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="${encodeURIComponent(file.originalName)}"`,

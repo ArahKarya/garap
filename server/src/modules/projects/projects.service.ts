@@ -19,6 +19,9 @@ function buildWhere(q: ProjectListQuery, scope: OwnerScope): Prisma.ProjectWhere
   } else if (!q.includeDeleted) {
     where.deletedAt = null;
   }
+  if (q.workspaceId) {
+    where.workspaceId = q.workspaceId;
+  }
   if (q.status) {
     where.status = q.status;
   } else if (!q.includeArchived) {
@@ -31,6 +34,14 @@ function buildWhere(q: ProjectListQuery, scope: OwnerScope): Prisma.ProjectWhere
     ];
   }
   return where;
+}
+
+async function assertWorkspaceOwned(workspaceId: string, ownerId: string) {
+  const ws = await prisma.workspace.findFirst({
+    where: { id: workspaceId, ownerId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!ws) throw NotFoundError('Workspace', workspaceId);
 }
 
 export async function list(q: ProjectListQuery, scope: OwnerScope) {
@@ -54,6 +65,7 @@ export async function list(q: ProjectListQuery, scope: OwnerScope) {
       take,
       orderBy,
       include: {
+        workspace: { select: { id: true, name: true, color: true, icon: true } },
         _count: {
           select: {
             tasks: { where: { deletedAt: null } },
@@ -71,6 +83,7 @@ export async function get(id: string, scope: OwnerScope) {
   const item = await prisma.project.findFirst({
     where: { id, ownerId: scope.ownerId, deletedAt: null },
     include: {
+      workspace: { select: { id: true, name: true, color: true, icon: true } },
       milestones: { orderBy: { sortOrder: 'asc' } },
       _count: {
         select: {
@@ -85,6 +98,7 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateProjectInput, scope: OwnerScope) {
+  await assertWorkspaceOwned(input.workspaceId, scope.ownerId);
   return prisma.project.create({
     data: {
       ...input,
@@ -95,6 +109,9 @@ export async function create(input: CreateProjectInput, scope: OwnerScope) {
 
 export async function update(id: string, input: UpdateProjectInput, scope: OwnerScope) {
   await get(id, scope);
+  if (input.workspaceId) {
+    await assertWorkspaceOwned(input.workspaceId, scope.ownerId);
+  }
   const archivedAt =
     input.status === 'ARCHIVED' ? new Date() : input.status ? null : undefined;
   return prisma.project.update({

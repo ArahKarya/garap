@@ -114,9 +114,18 @@ export const weeklyReviewProcessor: Processor<WeeklyReviewPayload> = async (job)
     lines.push('- Apa yang nyangkut?');
     lines.push('- Fokus utama minggu ini?');
 
+    // Pin to user's default workspace; skip if user has none yet (rare).
+    const defaultWs = await prisma.workspace.findFirst({
+      where: { ownerId: user.id, deletedAt: null },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+      select: { id: true },
+    });
+    if (!defaultWs) continue;
+
     await prisma.note.create({
       data: {
         ownerId: user.id,
+        workspaceId: defaultWs.id,
         title: noteTitle,
         content: lines.join('\n'),
         pinned: true,

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
 import {
@@ -81,11 +82,14 @@ export function DocumentsPage() {
   const [uploadDescription, setUploadDescription] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const { activeWorkspaceId } = useActiveWorkspace();
 
   const documentsQuery = useQuery({
-    queryKey: ['documents', selectedTagIds],
+    queryKey: ['documents', selectedTagIds, activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
       const params: Record<string, string | number> = { limit: 50 };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
       const res = await api.get('/documents', { params });
       return res.data.data as DocumentRow[];
@@ -94,7 +98,7 @@ export function DocumentsPage() {
 
   const externalForm = useForm<CreateExternalDocumentInput>({
     resolver: zodResolver(createExternalDocumentSchema),
-    defaultValues: { title: '', externalUrl: '' },
+    defaultValues: { workspaceId: activeWorkspaceId ?? '', title: '', externalUrl: '' },
   });
 
   const editForm = useForm<UpdateDocumentInput>({
@@ -103,7 +107,8 @@ export function DocumentsPage() {
 
   const externalMutation = useMutation({
     mutationFn: async (input: CreateExternalDocumentInput) => {
-      const res = await api.post('/documents/external', input);
+      const payload = { ...input, workspaceId: input.workspaceId || activeWorkspaceId || '' };
+      const res = await api.post('/documents/external', payload);
       return res.data.data;
     },
     onSuccess: () => {
@@ -147,8 +152,13 @@ export function DocumentsPage() {
     }
     setUploading(true);
     try {
+      if (!activeWorkspaceId) {
+        toast.error('Pilih workspace dulu');
+        return;
+      }
       const fd = new FormData();
       fd.append('file', selectedFile);
+      fd.append('workspaceId', activeWorkspaceId);
       fd.append('title', uploadTitle.trim());
       if (uploadDescription.trim()) fd.append('description', uploadDescription.trim());
       await api.post('/documents/upload', fd, {

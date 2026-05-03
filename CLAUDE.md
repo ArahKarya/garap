@@ -33,15 +33,19 @@ Settings, Notifications, File Upload, Job Queue, Bull Board) dipakai apa adanya.
 | PostgreSQL | 5439 | 5432 |
 | Redis | 6380 | 6379 |
 
-## Domain Model (5 entitas inti)
+## Domain Model (6 entitas inti)
 
 Lihat `server/prisma/schema.prisma`. Semua punya `ownerId`, `createdAt`,
-`updatedAt`, `deletedAt` (soft delete). Bisa di-tag via `EntityTag` polymorphic.
+`updatedAt`, `deletedAt` (soft delete). Hierarki:
+**Workspace → Project → {Task, Link, Note, Document}**.
+Task/Link/Note/Document punya FK langsung ke Workspace (NOT NULL) plus FK
+opsional ke Project. Bisa di-tag via `EntityTag` polymorphic.
 
 | Model | Tujuan | Phase |
 |---|---|---|
+| `Workspace` | Container per perusahaan/konteks; root hierarki | 2 |
 | `Task` | Todo + due date + prioritas + sub-task hierarchy + recurrence | 1 |
-| `Project` | Container task/link/note/document + milestones | 1 |
+| `Project` | Container task/link/note/document + milestones (dalam workspace) | 1 |
 | `Link` | Bookmark multi-platform (GDrive/GitHub/Figma/Notion/dll) dengan og-tag metadata | 1 |
 | `Tag` | Universal tag (polymorphic via `EntityTag`) | 1 |
 | `Note` | Markdown notes (backlink antar entitas) | 2 |
@@ -71,9 +75,9 @@ Login JWT lokal (email/password) tetap tersedia sebagai fallback dev/break-glass
 
 ## Permissions Tambahan
 
-Di luar 16 permission bawaan ArahKarya, Panggon Mikir tambah 17 permission domain
-(`task:*`, `project:*`, `link:*`, `tag:*`, `note:*`, `document:*`). Lihat
-`packages/shared/src/constants/index.ts`.
+Di luar 16 permission bawaan ArahKarya, Panggon Mikir tambah 20 permission domain
+(`workspace:*`, `task:*`, `project:*`, `link:*`, `tag:*`, `note:*`,
+`document:*`). Lihat `packages/shared/src/constants/index.ts`.
 
 Solo-user app — user pertama otomatis dapat role `SUPER_ADMIN` dan bypass semua
 permission check, jadi seluruh permission existing untuk persiapan masa depan
@@ -117,14 +121,19 @@ Lalu manual:
 
 ## Module Tier Decision (untuk Panggon Mikir)
 
+Saat ini semua module pakai tier **Simple** (`routes.ts + service.ts`, service
+akses Prisma langsung). Upgrade ke Layered hanya saat business logic
+benar-benar berat dan butuh repository abstraction.
+
 | Module | Tier | Alasan |
 |---|---|---|
-| `tasks` | Simple | CRUD + filter + soft delete |
+| `workspaces` | Simple | CRUD + isDefault flip + soft delete |
+| `tasks` | Simple | CRUD + filter + recurrence + sub-task |
 | `projects` | Simple | CRUD + milestone child + status |
-| `links` | Layered | Metadata fetch async, health check, polymorphic tagging |
+| `links` | Simple | CRUD + metadata fetch (sync di create) + health worker |
 | `tags` | Simple | CRUD universal |
 | `notes` | Simple | CRUD markdown |
-| `documents` | Layered | Upload + external URL + storage abstraction |
+| `documents` | Simple | Upload + external URL + path-traversal guard |
 
 ## Testing
 

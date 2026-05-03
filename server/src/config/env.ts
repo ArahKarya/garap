@@ -32,7 +32,11 @@ const envSchema = z.object({
   BULL_BOARD_PATH: z.string().default('/admin/queues'),
 
   SEED_ADMIN_EMAIL: z.string().email().default('admin@panggonmikir.local'),
-  SEED_ADMIN_PASSWORD: z.string().default('admin123'),
+  SEED_ADMIN_PASSWORD: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined))
+    .refine((v) => !v || v.length >= 12, 'SEED_ADMIN_PASSWORD harus min 12 karakter'),
 });
 
 const parsed = envSchema.safeParse(process.env);

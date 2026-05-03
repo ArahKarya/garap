@@ -29,6 +29,8 @@ function buildWhere(q: TaskListQuery, scope: OwnerScope): Prisma.TaskWhereInput 
       ...(q.dueAfter ? { gte: q.dueAfter } : {}),
     };
   }
+
+  if (q.workspaceId) where.workspaceId = q.workspaceId;
   if (q.search) {
     where.OR = [
       { title: { contains: q.search, mode: 'insensitive' } },
@@ -79,10 +81,19 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateTaskInput, scope: OwnerScope) {
-  // Validate that referenced project & parent task belong to the same owner.
+  const workspace = await prisma.workspace.findFirst({
+    where: { id: input.workspaceId, ownerId: scope.ownerId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!workspace) throw NotFoundError('Workspace', input.workspaceId);
   if (input.projectId) {
     const project = await prisma.project.findFirst({
-      where: { id: input.projectId, ownerId: scope.ownerId, deletedAt: null },
+      where: {
+        id: input.projectId,
+        ownerId: scope.ownerId,
+        workspaceId: input.workspaceId,
+        deletedAt: null,
+      },
       select: { id: true },
     });
     if (!project) throw NotFoundError('Project', input.projectId);
@@ -104,8 +115,18 @@ export async function create(input: CreateTaskInput, scope: OwnerScope) {
 
 export async function update(id: string, input: UpdateTaskInput, scope: OwnerScope) {
   const before = await get(id, scope);
-  // If status changes to DONE, set completedAt; if it changes to anything
-  // else, clear it. If status is omitted, leave completedAt untouched.
+  if (input.projectId) {
+    const project = await prisma.project.findFirst({
+      where: {
+        id: input.projectId,
+        ownerId: scope.ownerId,
+        workspaceId: before.workspaceId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!project) throw NotFoundError('Project', input.projectId);
+  }
   const completedAt =
     input.status === 'DONE' ? new Date() : input.status ? null : undefined;
   const updated = await prisma.task.update({
@@ -215,6 +236,7 @@ async function maybeSpawnNextRecurrence(
         title: true,
         description: true,
         priority: true,
+        workspaceId: true,
         projectId: true,
         parentId: true,
         recurrence: true,
@@ -224,6 +246,7 @@ async function maybeSpawnNextRecurrence(
     const next = await prisma.task.create({
       data: {
         ownerId: scope.ownerId,
+        workspaceId: original.workspaceId,
         title: original.title,
         description: original.description,
         priority: original.priority,

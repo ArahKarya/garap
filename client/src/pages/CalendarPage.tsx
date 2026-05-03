@@ -18,6 +18,7 @@ import {
 import { id as localeID } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,17 +53,20 @@ export function CalendarPage() {
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
+  const { activeWorkspaceId } = useActiveWorkspace();
+
   const tasksQuery = useQuery({
-    queryKey: ['calendar', 'tasks', format(cursor, 'yyyy-MM')],
+    queryKey: ['calendar', 'tasks', format(cursor, 'yyyy-MM'), activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
     queryFn: async () => {
-      const res = await api.get('/tasks', {
-        params: {
-          limit: 200,
-          dueAfter: gridStart.toISOString(),
-          dueBefore: gridEnd.toISOString(),
-          includeCompleted: true,
-        },
-      });
+      const params: Record<string, string | number | boolean> = {
+        limit: 200,
+        dueAfter: gridStart.toISOString(),
+        dueBefore: gridEnd.toISOString(),
+        includeCompleted: true,
+      };
+      if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
+      const res = await api.get('/tasks', { params });
       return (res.data.data as CalendarTask[]).filter((t) => t.dueDate);
     },
   });

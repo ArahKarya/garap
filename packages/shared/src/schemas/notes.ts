@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const createNoteSchema = z.object({
+  workspaceId: z.string().min(1, 'Workspace wajib dipilih'),
   title: z.string().trim().min(1, 'Judul wajib diisi').max(300),
   content: z.string().max(100_000).default(''),
   pinned: z.boolean().optional().default(false),
@@ -13,6 +14,7 @@ export const noteListQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().trim().optional(),
+  workspaceId: z.string().optional(),
   projectId: z.string().cuid().optional(),
   pinned: z.coerce.boolean().optional(),
   includeDeleted: z.coerce.boolean().optional().default(false),
