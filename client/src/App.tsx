@@ -12,6 +12,7 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { LinksPage } from './pages/LinksPage';
 import { TagsPage } from './pages/TagsPage';
+import { WorkspacesPage } from './pages/WorkspacesPage';
 import { TagDetailPage } from './pages/TagDetailPage';
 import { NotesPage } from './pages/NotesPage';
 import { DocumentsPage } from './pages/DocumentsPage';
@@ -51,6 +52,7 @@ export function App() {
         <Route path="links" element={<LinksPage />} />
         <Route path="notes" element={<NotesPage />} />
         <Route path="documents" element={<DocumentsPage />} />
+        <Route path="workspaces" element={<WorkspacesPage />} />
         <Route path="tags" element={<TagsPage />} />
         <Route path="tags/:id" element={<TagDetailPage />} />
         <Route path="search" element={<SearchPage />} />

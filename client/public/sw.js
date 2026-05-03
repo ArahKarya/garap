@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panggonmikir-shell-v6';
+const CACHE_NAME = 'panggonmikir-shell-v7';
 
 const SHELL_ASSETS = [
   '/',

@@ -12,7 +12,9 @@ import {
   ChevronsUpDown,
   Plus,
   Loader2,
+  Settings as SettingsIcon,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -44,6 +46,7 @@ interface WorkspaceSwitcherProps {
 
 export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { active, workspaces, isLoading } = useActiveWorkspace();
   const setActiveWorkspaceId = useWorkspaceStore((s) => s.setActiveWorkspaceId);
   const [createOpen, setCreateOpen] = useState(false);
@@ -143,6 +146,10 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           <DropdownMenuItem onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
             Workspace baru
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/workspaces')}>
+            <SettingsIcon className="h-4 w-4" />
+            Kelola workspace
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

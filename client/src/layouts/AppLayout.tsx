@@ -20,6 +20,7 @@ import {
   Trash2,
   Search as SearchIcon,
   Calendar as CalendarIcon,
+  Briefcase,
 } from 'lucide-react';
 import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandPalette';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -61,6 +62,7 @@ const nav: NavItem[] = [
   { to: '/notes', label: 'Notes', icon: StickyNote, permission: 'note:read' },
   { to: '/documents', label: 'Documents', icon: FileBox, permission: 'document:read' },
   { to: '/tags', label: 'Tags', icon: TagIcon, permission: 'tag:read' },
+  { to: '/workspaces', label: 'Workspaces', icon: Briefcase, permission: 'workspace:read' },
   { to: '/trash', label: 'Trash', icon: Trash2, permission: null },
   { to: '/users', label: 'Users', icon: Users, permission: 'user:read' },
   { to: '/audit-logs', label: 'Audit Log', icon: FileText, permission: 'audit:read' },
