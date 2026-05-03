@@ -157,12 +157,16 @@ export async function recordVisit(id: string, scope: OwnerScope) {
 export async function refreshMetadata(id: string, scope: OwnerScope) {
   const link = await get(id, scope);
   const meta = await fetchMetadata(link.url);
+  // Refresh hanya update visual metadata + isi field yang masih kosong.
+  // Title/description yang sudah user edit tetap dipertahankan.
+  const titleIsAutoOrEmpty = !link.title?.trim() || link.title === link.url;
+  const descIsEmpty = !link.description?.trim();
   return prisma.link.update({
     where: { id },
     data: {
       canonicalUrl: meta.canonicalUrl,
-      title: meta.title,
-      description: meta.description,
+      ...(titleIsAutoOrEmpty ? { title: meta.title } : {}),
+      ...(descIsEmpty ? { description: meta.description } : {}),
       faviconUrl: meta.faviconUrl,
       thumbnailUrl: meta.thumbnailUrl,
       platform: detectPlatform(link.url),
