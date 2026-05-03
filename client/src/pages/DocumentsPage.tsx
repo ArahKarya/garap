@@ -47,6 +47,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { TagPicker } from '@/components/TagPicker';
 import { TagFilter } from '@/components/TagFilter';
 
@@ -95,6 +102,19 @@ export function DocumentsPage() {
       return res.data.data as DocumentRow[];
     },
   });
+
+  const projectsQuery = useQuery({
+    queryKey: ['projects', 'select', activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
+    queryFn: async () => {
+      const res = await api.get('/projects', {
+        params: { limit: 100, workspaceId: activeWorkspaceId },
+      });
+      return res.data.data as Array<{ id: string; name: string }>;
+    },
+  });
+
+  const [uploadProjectId, setUploadProjectId] = useState<string | null>(null);
 
   const externalForm = useForm<CreateExternalDocumentInput>({
     resolver: zodResolver(createExternalDocumentSchema),
@@ -161,6 +181,7 @@ export function DocumentsPage() {
       fd.append('workspaceId', activeWorkspaceId);
       fd.append('title', uploadTitle.trim());
       if (uploadDescription.trim()) fd.append('description', uploadDescription.trim());
+      if (uploadProjectId) fd.append('projectId', uploadProjectId);
       await api.post('/documents/upload', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -169,6 +190,7 @@ export function DocumentsPage() {
       setSelectedFile(null);
       setUploadTitle('');
       setUploadDescription('');
+      setUploadProjectId(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       setCreateOpen(false);
     } catch (err: unknown) {
@@ -399,6 +421,25 @@ export function DocumentsPage() {
                   onChange={(e) => setUploadDescription(e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Project (opsional)</Label>
+                <Select
+                  value={uploadProjectId ?? '__none__'}
+                  onValueChange={(v) => setUploadProjectId(v === '__none__' ? null : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tanpa project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Tanpa project</SelectItem>
+                    {projectsQuery.data?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <DialogFooter>
                 <Button
                   variant="ghost"
@@ -449,6 +490,27 @@ export function DocumentsPage() {
                     {...externalForm.register('description')}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Project (opsional)</Label>
+                  <Select
+                    value={externalForm.watch('projectId') ?? '__none__'}
+                    onValueChange={(v) =>
+                      externalForm.setValue('projectId', v === '__none__' ? null : v)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tanpa project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Tanpa project</SelectItem>
+                      {projectsQuery.data?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <DialogFooter>
                   <Button
                     type="button"
@@ -485,6 +547,27 @@ export function DocumentsPage() {
             <div className="space-y-2">
               <Label htmlFor="edit-desc">Deskripsi</Label>
               <Textarea id="edit-desc" rows={3} {...editForm.register('description')} />
+            </div>
+            <div className="space-y-2">
+              <Label>Project</Label>
+              <Select
+                value={editForm.watch('projectId') ?? '__none__'}
+                onValueChange={(v) =>
+                  editForm.setValue('projectId', v === '__none__' ? null : v)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tanpa project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Tanpa project</SelectItem>
+                  {projectsQuery.data?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Tags</Label>

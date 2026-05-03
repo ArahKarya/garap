@@ -18,11 +18,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { TagPicker } from '@/components/TagPicker';
 import { TagFilter } from '@/components/TagFilter';
 
 interface NoteRow {
   id: string;
+  workspaceId: string;
+  projectId: string | null;
   title: string;
   content: string;
   pinned: boolean;
@@ -91,11 +100,23 @@ export function NotesPage() {
     },
   });
 
+  const projectsQuery = useQuery({
+    queryKey: ['projects', 'select', activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
+    queryFn: async () => {
+      const res = await api.get('/projects', {
+        params: { limit: 100, workspaceId: activeWorkspaceId },
+      });
+      return res.data.data as Array<{ id: string; name: string }>;
+    },
+  });
+
   const {
     register,
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateNoteInput>({
     resolver: zodResolver(createNoteSchema),
@@ -180,13 +201,25 @@ export function NotesPage() {
 
   const openCreate = (): void => {
     setEditingId(null);
-    reset({ title: '', content: '', pinned: false });
+    reset({
+      workspaceId: activeWorkspaceId ?? '',
+      title: '',
+      content: '',
+      pinned: false,
+      projectId: null,
+    });
     setOpen(true);
   };
 
   const openEdit = (n: NoteRow): void => {
     setEditingId(n.id);
-    reset({ title: n.title, content: n.content, pinned: n.pinned });
+    reset({
+      workspaceId: n.workspaceId ?? activeWorkspaceId ?? '',
+      title: n.title,
+      content: n.content,
+      pinned: n.pinned,
+      projectId: n.projectId,
+    });
     setOpen(true);
   };
 
@@ -407,6 +440,28 @@ export function NotesPage() {
                 />
               </TabsContent>
             </Tabs>
+
+            <div className="space-y-2">
+              <Label>Project (opsional)</Label>
+              <Select
+                value={watch('projectId') ?? '__none__'}
+                onValueChange={(v) =>
+                  setValue('projectId', v === '__none__' ? null : v)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tanpa project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Tanpa project</SelectItem>
+                  {projectsQuery.data?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
               <Label>Tags</Label>

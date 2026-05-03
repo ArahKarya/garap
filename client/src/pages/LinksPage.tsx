@@ -77,6 +77,17 @@ export function LinksPage() {
     },
   });
 
+  const projectsQuery = useQuery({
+    queryKey: ['projects', 'select', activeWorkspaceId],
+    enabled: !!activeWorkspaceId,
+    queryFn: async () => {
+      const res = await api.get('/projects', {
+        params: { limit: 100, workspaceId: activeWorkspaceId },
+      });
+      return res.data.data as Array<{ id: string; name: string; color: string | null }>;
+    },
+  });
+
   // Use createLinkSchema for create, updateLinkSchema for edit (no url field on edit).
   const createForm = useForm<CreateLinkInput>({
     resolver: zodResolver(createLinkSchema),
@@ -402,6 +413,28 @@ export function LinksPage() {
               </div>
 
               <div className="space-y-2">
+                <Label>Project (opsional)</Label>
+                <Select
+                  value={createForm.watch('projectId') ?? '__none__'}
+                  onValueChange={(v) =>
+                    createForm.setValue('projectId', v === '__none__' ? null : v)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tanpa project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Tanpa project</SelectItem>
+                    {projectsQuery.data?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="notes">Catatan pribadi (opsional)</Label>
                 <Textarea id="notes" rows={3} {...createForm.register('notes')} />
               </div>
@@ -451,6 +484,28 @@ export function LinksPage() {
                     {LINK_PLATFORMS.map((p) => (
                       <SelectItem key={p} value={p}>
                         {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Project</Label>
+                <Select
+                  value={editForm.watch('projectId') ?? '__none__'}
+                  onValueChange={(v) =>
+                    editForm.setValue('projectId', v === '__none__' ? null : v)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tanpa project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Tanpa project</SelectItem>
+                    {projectsQuery.data?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
