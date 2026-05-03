@@ -11,6 +11,12 @@ import {
 } from 'lucide-react';
 import type { ProjectStatus, TaskStatus } from '@panggonmikir/shared';
 import { api } from '@/lib/api';
+import {
+  AddTaskDialog,
+  AddLinkDialog,
+  AddNoteDialog,
+  AddDocumentDialog,
+} from '@/components/project/ProjectAddDialogs';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface ProjectDetail {
   id: string;
   name: string;
+  workspaceId: string;
   description: string | null;
   status: ProjectStatus;
   color: string | null;
@@ -232,6 +239,14 @@ export function ProjectDetailPage() {
         </TabsList>
 
         <TabsContent value="tasks" className="space-y-2">
+          {projectQuery.data && (
+            <div className="flex justify-end">
+              <AddTaskDialog
+                workspaceId={projectQuery.data.workspaceId}
+                projectId={projectQuery.data.id}
+              />
+            </div>
+          )}
           {tasksQuery.isLoading && <Skeleton className="h-12 w-full" />}
           {!tasksQuery.isLoading && (!tasksQuery.data || tasksQuery.data.length === 0) && (
             <EmptyState description="Belum ada task di project ini." />
@@ -267,6 +282,14 @@ export function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value="links" className="space-y-2">
+          {projectQuery.data && (
+            <div className="flex justify-end">
+              <AddLinkDialog
+                workspaceId={projectQuery.data.workspaceId}
+                projectId={projectQuery.data.id}
+              />
+            </div>
+          )}
           {linksQuery.isLoading && <Skeleton className="h-12 w-full" />}
           {!linksQuery.isLoading && (!linksQuery.data || linksQuery.data.length === 0) && (
             <EmptyState description="Belum ada link di project ini." />
@@ -297,6 +320,14 @@ export function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-2">
+          {projectQuery.data && (
+            <div className="flex justify-end">
+              <AddNoteDialog
+                workspaceId={projectQuery.data.workspaceId}
+                projectId={projectQuery.data.id}
+              />
+            </div>
+          )}
           {notesQuery.isLoading && <Skeleton className="h-12 w-full" />}
           {!notesQuery.isLoading && (!notesQuery.data || notesQuery.data.length === 0) && (
             <EmptyState description="Belum ada note di project ini." />
@@ -320,6 +351,14 @@ export function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-2">
+          {projectQuery.data && (
+            <div className="flex justify-end">
+              <AddDocumentDialog
+                workspaceId={projectQuery.data.workspaceId}
+                projectId={projectQuery.data.id}
+              />
+            </div>
+          )}
           {documentsQuery.isLoading && <Skeleton className="h-12 w-full" />}
           {!documentsQuery.isLoading &&
             (!documentsQuery.data || documentsQuery.data.length === 0) && (
