@@ -19,7 +19,7 @@ export const updateProjectSchema = createProjectSchema.partial();
 
 export const projectListQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
+  limit: z.coerce.number().int().positive().max(500).default(20),
   search: z.string().trim().optional(),
   workspaceId: z.string().optional(),
   status: z.enum(PROJECT_STATUSES).optional(),

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -201,6 +201,7 @@ export function TasksPage() {
 
   const {
     register,
+    getValues,
     handleSubmit,
     setValue,
     watch,
@@ -215,6 +216,13 @@ export function TasksPage() {
       priority: 'MEDIUM',
     },
   });
+
+  // Sync workspaceId once /api/workspaces resolves (prevents silent submit fails).
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      setValue('workspaceId', activeWorkspaceId, { shouldValidate: false });
+    }
+  }, [activeWorkspaceId, setValue]);
 
   const upsertMutation = useMutation({
     mutationFn: async (input: CreateTaskInput) => {
@@ -546,7 +554,21 @@ export function TasksPage() {
             <DialogTitle>{editingId ? 'Edit Task' : 'Task Baru'}</DialogTitle>
           </DialogHeader>
           <form
-            onSubmit={handleSubmit((d) => upsertMutation.mutate(d))}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const raw = getValues();
+              const data = {
+                ...raw,
+                workspaceId: raw.workspaceId || activeWorkspaceId || '',
+              };
+              const parsed = createTaskSchema.safeParse(data);
+              if (!parsed.success) {
+                const first = parsed.error.errors[0];
+                toast.error(first?.message ?? 'Validasi gagal');
+                return;
+              }
+              upsertMutation.mutate(parsed.data);
+            }}
             className="space-y-4"
           >
             <div className="space-y-2">
