@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -127,6 +127,12 @@ export function NotesPage() {
       pinned: false,
     },
   });
+
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      setValue('workspaceId', activeWorkspaceId, { shouldValidate: false });
+    }
+  }, [activeWorkspaceId, setValue]);
 
   const upsertMutation = useMutation({
     mutationFn: async (input: CreateNoteInput) => {

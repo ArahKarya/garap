@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -120,6 +120,12 @@ export function DocumentsPage() {
     resolver: zodResolver(createExternalDocumentSchema),
     defaultValues: { workspaceId: activeWorkspaceId ?? '', title: '', externalUrl: '' },
   });
+
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      externalForm.setValue('workspaceId', activeWorkspaceId, { shouldValidate: false });
+    }
+  }, [activeWorkspaceId, externalForm]);
 
   const editForm = useForm<UpdateDocumentInput>({
     resolver: zodResolver(updateDocumentSchema),

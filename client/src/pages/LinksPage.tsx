@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -93,6 +93,13 @@ export function LinksPage() {
     resolver: zodResolver(createLinkSchema),
     defaultValues: { workspaceId: activeWorkspaceId ?? '', url: '' },
   });
+
+  // Sync form's workspaceId once the workspace becomes available (or changes).
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      createForm.setValue('workspaceId', activeWorkspaceId, { shouldValidate: false });
+    }
+  }, [activeWorkspaceId, createForm]);
 
   const editForm = useForm<UpdateLinkInput>({
     resolver: zodResolver(updateLinkSchema),
