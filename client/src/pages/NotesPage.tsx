@@ -113,6 +113,7 @@ export function NotesPage() {
 
   const {
     register,
+    getValues,
     handleSubmit,
     watch,
     reset,
@@ -390,7 +391,21 @@ export function NotesPage() {
             <DialogTitle>{editingId ? 'Edit Note' : 'Note Baru'}</DialogTitle>
           </DialogHeader>
           <form
-            onSubmit={handleSubmit((d) => upsertMutation.mutate(d))}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const raw = getValues();
+              const data = {
+                ...raw,
+                workspaceId: raw.workspaceId || activeWorkspaceId || '',
+              };
+              const parsed = createNoteSchema.safeParse(data);
+              if (!parsed.success) {
+                const first = parsed.error.errors[0];
+                toast.error(first?.message ?? 'Validasi gagal');
+                return;
+              }
+              upsertMutation.mutate(parsed.data);
+            }}
             className="space-y-4"
           >
             <div className="space-y-2">

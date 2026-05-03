@@ -463,7 +463,21 @@ export function DocumentsPage() {
 
             <TabsContent value="external" className="space-y-4 pt-4">
               <form
-                onSubmit={externalForm.handleSubmit((d) => externalMutation.mutate(d))}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const raw = externalForm.getValues();
+                  const data = {
+                    ...raw,
+                    workspaceId: raw.workspaceId || activeWorkspaceId || '',
+                  };
+                  const parsed = createExternalDocumentSchema.safeParse(data);
+                  if (!parsed.success) {
+                    const first = parsed.error.errors[0];
+                    toast.error(first?.message ?? 'Validasi gagal');
+                    return;
+                  }
+                  externalMutation.mutate(parsed.data);
+                }}
                 className="space-y-4"
               >
                 <div className="space-y-2">

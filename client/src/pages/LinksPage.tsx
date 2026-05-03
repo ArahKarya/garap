@@ -393,7 +393,21 @@ export function LinksPage() {
 
           {!editingId ? (
             <form
-              onSubmit={createForm.handleSubmit((d) => createMutation.mutate(d))}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const raw = createForm.getValues();
+                const data = {
+                  ...raw,
+                  workspaceId: raw.workspaceId || activeWorkspaceId || '',
+                };
+                const parsed = createLinkSchema.safeParse(data);
+                if (!parsed.success) {
+                  const first = parsed.error.errors[0];
+                  toast.error(first?.message ?? 'Validasi gagal');
+                  return;
+                }
+                createMutation.mutate(parsed.data);
+              }}
               className="space-y-4"
             >
               <div className="space-y-2">
