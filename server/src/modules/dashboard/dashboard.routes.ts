@@ -19,15 +19,9 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res, next) => 
     const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
     const sevenDaysFromNow = new Date(startOfDay.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const wsFilter = workspaceId
-      ? {
-          OR: [
-            { projectId: null },
-            { project: { workspaceId } },
-          ],
-        }
-      : {};
-    const wsProjectFilter = workspaceId ? { workspaceId } : {};
+    // Task/Link/Note/Document have direct workspaceId FK since Sprint 2 —
+    // filter is a simple equality, no OR/orphan workaround needed.
+    const wsFilter = workspaceId ? { workspaceId } : {};
     const baseTask = { ownerId, deletedAt: null, ...wsFilter } as const;
 
     const [
@@ -61,7 +55,7 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res, next) => 
         },
       }),
       prisma.project.count({
-        where: { ownerId, deletedAt: null, status: 'ACTIVE', ...wsProjectFilter },
+        where: { ownerId, deletedAt: null, status: 'ACTIVE', ...wsFilter },
       }),
       prisma.link.count({ where: { ownerId, deletedAt: null, ...wsFilter } }),
       prisma.link.findMany({
