@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, X, Loader2, Tag as TagIcon } from 'lucide-react';
+import { Plus, X, Loader2, Tag as TagIcon, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TaggableEntity } from '@panggonmikir/shared';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface Tag {
   id: string;
@@ -31,7 +30,7 @@ interface TagPickerProps {
  */
 export function TagPicker({ entityType, entityId }: TagPickerProps) {
   const qc = useQueryClient();
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const allTagsQuery = useQuery({
@@ -40,7 +39,7 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
       const res = await api.get('/tags');
       return res.data.data as Tag[];
     },
-    enabled: popoverOpen && !!entityId, // lazy fetch on first open
+    enabled: panelOpen && !!entityId, // lazy fetch on first expand
   });
 
   const attachedQuery = useQuery({
@@ -130,36 +129,43 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {attachedQuery.data?.map((t) => (
-        <Badge
-          key={t.id}
-          variant="outline"
-          className="text-xs gap-1"
-          style={t.color ? { borderColor: t.color, color: t.color } : undefined}
-        >
-          {t.name}
-          <button
-            type="button"
-            onClick={() => detachMutation.mutate(t.id)}
-            disabled={detachMutation.isPending}
-            className="ml-0.5 hover:bg-destructive/10 rounded-full"
-            title="Lepas tag"
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {attachedQuery.data?.map((t) => (
+          <Badge
+            key={t.id}
+            variant="outline"
+            className="text-xs gap-1"
+            style={t.color ? { borderColor: t.color, color: t.color } : undefined}
           >
-            <X className="h-3 w-3" />
-          </button>
-        </Badge>
-      ))}
+            {t.name}
+            <button
+              type="button"
+              onClick={() => detachMutation.mutate(t.id)}
+              disabled={detachMutation.isPending}
+              className="ml-0.5 hover:bg-destructive/10 rounded-full"
+              title="Lepas tag"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
 
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger
+        <button
           type="button"
+          onClick={() => setPanelOpen((v) => !v)}
           className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-input bg-background px-2 text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           <Plus className="h-3 w-3" />
           Tag
-        </PopoverTrigger>
-        <PopoverContent className="w-64 p-2" align="start">
+          <ChevronDown
+            className={cn('h-3 w-3 transition-transform', panelOpen && 'rotate-180')}
+          />
+        </button>
+      </div>
+
+      {panelOpen && (
+        <div className="rounded-md border bg-popover p-2">
           <Input
             autoFocus
             placeholder="Cari atau buat tag baru..."
@@ -196,11 +202,7 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
                   <button
                     key={t.id}
                     type="button"
-                    onMouseDown={(e) => {
-                      // Use mousedown + preventDefault to avoid base-ui Popover
-                      // dismiss handler racing with our click and swallowing it.
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       if (isAttached) {
                         detachMutation.mutate(t.id);
                       } else {
@@ -226,9 +228,7 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
               {search.trim() && !exactMatch && (
                 <button
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                  onClick={() => {
                     if (!createAndAttachMutation.isPending) {
                       createAndAttachMutation.mutate(search.trim());
                     }
@@ -246,8 +246,8 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
               )}
             </div>
           </ScrollArea>
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
     </div>
   );
 }
