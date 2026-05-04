@@ -55,6 +55,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TagPicker } from '@/components/TagPicker';
+import { TaskDetailDialog } from '@/components/TaskDetailDialog';
 import { TagFilter } from '@/components/TagFilter';
 import { cn } from '@/lib/utils';
 
@@ -162,6 +163,7 @@ export function TasksPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'ALL'>('ALL');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [view, setView] = useState<ViewMode>('list');
@@ -526,6 +528,7 @@ export function TasksPage() {
                     if (confirm(`Pindah "${title}" ke trash?`)) deleteMutation.mutate(id);
                   }}
                   onAddSubtask={openCreate}
+                  onView={setViewingId}
                 />
               ))}
             </TableBody>
@@ -535,7 +538,7 @@ export function TasksPage() {
         <KanbanBoard
           byStatus={byStatus}
           loading={tasksQuery.isLoading}
-          onEdit={openEdit}
+          onView={setViewingId}
           onChangeStatus={(id, s) => setStatusMutation.mutate({ id, status: s })}
           onAdd={(status) => {
             openCreate();
@@ -724,6 +727,18 @@ export function TasksPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <TaskDetailDialog
+        taskId={viewingId}
+        open={!!viewingId}
+        onOpenChange={(o) => !o && setViewingId(null)}
+        onEdit={() => {
+          const t = tasksQuery.data?.find((x) => x.id === viewingId);
+          if (!t) return;
+          setViewingId(null);
+          openEdit(t);
+        }}
+      />
     </div>
   );
 }
@@ -742,6 +757,7 @@ interface TaskRowGroupProps {
   onEdit: (t: TaskRow) => void;
   onDelete: (id: string, title: string) => void;
   onAddSubtask: (parentId: string) => void;
+  onView: (id: string) => void;
 }
 
 function TaskRowGroup({
@@ -754,6 +770,7 @@ function TaskRowGroup({
   onEdit,
   onDelete,
   onAddSubtask,
+  onView,
 }: TaskRowGroupProps) {
   const children = childrenByParent.get(t.id) ?? [];
   const indent = depth * 20;
@@ -785,7 +802,16 @@ function TaskRowGroup({
         <TableCell className="font-medium">
           <div style={{ paddingLeft: indent }} className="flex items-center gap-2">
             {depth > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
-            <span className={cn(t.status === 'DONE' && 'line-through')}>{t.title}</span>
+            <button
+              type="button"
+              onClick={() => onView(t.id)}
+              className={cn(
+                'text-left hover:underline cursor-pointer',
+                t.status === 'DONE' && 'line-through',
+              )}
+            >
+              {t.title}
+            </button>
             {t.recurrence && (
               <Repeat
                 className="h-3 w-3 text-info"
@@ -859,6 +885,7 @@ function TaskRowGroup({
           onEdit={onEdit}
           onDelete={onDelete}
           onAddSubtask={onAddSubtask}
+          onView={onView}
         />
       ))}
     </>
@@ -929,7 +956,7 @@ function BulkActionBar({
 interface KanbanBoardProps {
   byStatus: Record<TaskStatus, TaskRow[]>;
   loading: boolean;
-  onEdit: (t: TaskRow) => void;
+  onView: (id: string) => void;
   onChangeStatus: (id: string, status: TaskStatus) => void;
   onAdd: (status: TaskStatus) => void;
   subtaskCountFor: (id: string) => number;
@@ -939,7 +966,7 @@ interface KanbanBoardProps {
 function KanbanBoard({
   byStatus,
   loading,
-  onEdit,
+  onView,
   onChangeStatus,
   onAdd,
   subtaskCountFor,
@@ -974,7 +1001,7 @@ function KanbanBoard({
             status={status}
             tasks={byStatus[status]}
             loading={loading}
-            onEdit={onEdit}
+            onView={onView}
             onChangeStatus={onChangeStatus}
             onAdd={() => onAdd(status)}
             subtaskCountFor={subtaskCountFor}
@@ -990,7 +1017,7 @@ interface KanbanColumnProps {
   status: TaskStatus;
   tasks: TaskRow[];
   loading: boolean;
-  onEdit: (t: TaskRow) => void;
+  onView: (id: string) => void;
   onChangeStatus: (id: string, status: TaskStatus) => void;
   onAdd: () => void;
   subtaskCountFor: (id: string) => number;
@@ -1001,7 +1028,7 @@ function KanbanColumn({
   status,
   tasks,
   loading,
-  onEdit,
+  onView,
   onChangeStatus,
   onAdd,
   subtaskCountFor,
@@ -1045,7 +1072,7 @@ function KanbanColumn({
           <KanbanCard
             key={t.id}
             task={t}
-            onEdit={onEdit}
+            onView={onView}
             onChangeStatus={onChangeStatus}
             subtaskCount={subtaskCountFor(t.id)}
             parentTitle={parentTitleFor(t.parentId)}
@@ -1058,13 +1085,13 @@ function KanbanColumn({
 
 interface KanbanCardProps {
   task: TaskRow;
-  onEdit: (t: TaskRow) => void;
+  onView: (id: string) => void;
   onChangeStatus: (id: string, status: TaskStatus) => void;
   subtaskCount: number;
   parentTitle: string | null;
 }
 
-function KanbanCard({ task: t, onEdit, onChangeStatus, subtaskCount, parentTitle }: KanbanCardProps) {
+function KanbanCard({ task: t, onView, onChangeStatus, subtaskCount, parentTitle }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: t.id });
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
@@ -1075,7 +1102,7 @@ function KanbanCard({ task: t, onEdit, onChangeStatus, subtaskCount, parentTitle
       style={style}
       {...attributes}
       {...listeners}
-      onClick={() => onEdit(t)}
+      onClick={() => onView(t.id)}
       className={cn(
         'group rounded-md border bg-card p-2.5 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow',
         'border-l-4',
