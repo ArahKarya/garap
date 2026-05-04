@@ -65,15 +65,28 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
     mutationFn: async (tagId: string) => {
       await api.post('/tags/attach', { tagId, entityType, entityId });
     },
-    onSuccess: invalidate,
-    onError: () => toast.error('Gagal pasang tag'),
+    onSuccess: () => {
+      invalidate();
+      toast.success('Tag dipasang');
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { error?: { message?: string } } } }).response
+              ?.data?.error?.message
+          : null;
+      toast.error(msg ?? 'Gagal pasang tag');
+    },
   });
 
   const detachMutation = useMutation({
     mutationFn: async (tagId: string) => {
       await api.post('/tags/detach', { tagId, entityType, entityId });
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success('Tag dilepas');
+    },
     onError: () => toast.error('Gagal lepas tag'),
   });
 
@@ -183,7 +196,11 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      // Use mousedown + preventDefault to avoid base-ui Popover
+                      // dismiss handler racing with our click and swallowing it.
+                      e.preventDefault();
+                      e.stopPropagation();
                       if (isAttached) {
                         detachMutation.mutate(t.id);
                       } else {
@@ -209,7 +226,13 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
               {search.trim() && !exactMatch && (
                 <button
                   type="button"
-                  onClick={() => createAndAttachMutation.mutate(search.trim())}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!createAndAttachMutation.isPending) {
+                      createAndAttachMutation.mutate(search.trim());
+                    }
+                  }}
                   disabled={createAndAttachMutation.isPending}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent text-left text-primary"
                 >
