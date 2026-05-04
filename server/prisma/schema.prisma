@@ -34,6 +34,7 @@ model User {
   links         Link[]
   notes         Note[]
   documents     Document[]
+  references    Reference[]
   tags          Tag[]
 
   @@map("users")
@@ -174,12 +175,13 @@ model Workspace {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  projects  Project[]
-  tasks     Task[]
-  links     Link[]
-  notes     Note[]
-  documents Document[]
+  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  projects   Project[]
+  tasks      Task[]
+  links      Link[]
+  notes      Note[]
+  documents  Document[]
+  references Reference[]
 
   @@unique([ownerId, name])
   @@index([ownerId])
@@ -225,6 +227,19 @@ enum TaggableEntity {
   LINK
   NOTE
   DOCUMENT
+  REFERENCE
+}
+
+enum ReferenceType {
+  BOOK
+  JOURNAL_ARTICLE
+  CONFERENCE_PAPER
+  THESIS
+  BOOK_CHAPTER
+  REPORT
+  WEBSITE
+  PREPRINT
+  OTHER
 }
 
 model Project {
@@ -248,6 +263,7 @@ model Project {
   links      Link[]
   notes      Note[]
   documents  Document[]
+  references Reference[]
   milestones Milestone[]
 
   @@index([ownerId])
@@ -388,6 +404,46 @@ model Document {
   @@index([projectId])
   @@index([deletedAt])
   @@map("documents")
+}
+
+/// Bibliography entry — books, journal articles, theses, etc.
+/// Optional file upload (PDF) via fileUploadId.
+model Reference {
+  id           String        @id @default(cuid())
+  ownerId      String        @map("owner_id")
+  workspaceId  String        @map("workspace_id")
+  projectId    String?       @map("project_id")
+  type         ReferenceType @default(JOURNAL_ARTICLE)
+  title        String        @db.Text
+  authors      String?       @db.Text // comma-separated; "Surname, F.; Surname, F."
+  year         Int?
+  source       String?       @db.Text // publisher | journal | conference | institution
+  volume       String?
+  issue        String?
+  pages        String?       // "12-34"
+  doi          String?
+  isbn         String?
+  url          String?       @db.Text
+  abstract     String?       @db.Text
+  notes        String?       @db.Text
+  citation     String?       @db.Text // user-formatted citation
+  fileUploadId String?       @unique @map("file_upload_id")
+  deletedAt    DateTime?     @map("deleted_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId, workspaceId])
+  @@index([ownerId, projectId])
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([type])
+  @@index([year])
+  @@index([deletedAt])
+  @@map("references")
 }
 
 model Tag {

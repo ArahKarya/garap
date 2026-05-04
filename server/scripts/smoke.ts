@@ -181,6 +181,35 @@ async function main(): Promise<void> {
     await probe('DELETE doc purge', `${BASE}/documents/${docId}/purge`, { method: 'DELETE' });
   }
 
+  const refRes = await probe(
+    'POST /references valid',
+    `${BASE}/references`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        workspaceId: wsId,
+        type: 'JOURNAL_ARTICLE',
+        title: '[smoke] Reference A',
+        authors: 'Smith, J.',
+        year: 2024,
+        source: 'Test Journal',
+      }),
+    },
+    201,
+  );
+  const refId = (refRes.body as CreatedItem)?.data?.id;
+  if (refId) {
+    await probe('GET /references list', `${BASE}/references?workspaceId=${wsId}`);
+    await probe('PATCH /references/:id', `${BASE}/references/${refId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ year: 2025 }),
+    });
+    await probe('DELETE /references/:id', `${BASE}/references/${refId}`, { method: 'DELETE' });
+    await probe('DELETE /references/:id/purge', `${BASE}/references/${refId}/purge`, {
+      method: 'DELETE',
+    });
+  }
+
   const newWs = await probe(
     'POST /workspaces',
     `${BASE}/workspaces`,

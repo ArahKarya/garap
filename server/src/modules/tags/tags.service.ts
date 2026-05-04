@@ -119,6 +119,7 @@ export async function entitiesForTag(
     LINK: [] as string[],
     NOTE: [] as string[],
     DOCUMENT: [] as string[],
+    REFERENCE: [] as string[],
   };
   for (const t of taggings) {
     idsByType[t.entityType].push(t.entityId);
@@ -126,7 +127,7 @@ export async function entitiesForTag(
 
   const wsScope = workspaceId ? { workspaceId } : {};
 
-  const [tasks, projects, links, notes, documents] = await Promise.all([
+  const [tasks, projects, links, notes, documents, references] = await Promise.all([
     idsByType.TASK.length
       ? prisma.task.findMany({
           where: {
@@ -198,6 +199,24 @@ export async function entitiesForTag(
           orderBy: { updatedAt: 'desc' },
         })
       : [],
+    idsByType.REFERENCE.length
+      ? prisma.reference.findMany({
+          where: {
+            id: { in: idsByType.REFERENCE },
+            ownerId: scope.ownerId,
+            deletedAt: null,
+            ...wsScope,
+          },
+          select: {
+            id: true,
+            title: true,
+            authors: true,
+            type: true,
+            year: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : [],
   ]);
 
   return {
@@ -208,7 +227,8 @@ export async function entitiesForTag(
       links: links.length,
       notes: notes.length,
       documents: documents.length,
+      references: references.length,
     },
-    items: { tasks, projects, links, notes, documents },
+    items: { tasks, projects, links, notes, documents, references },
   };
 }

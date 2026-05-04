@@ -9,6 +9,7 @@ import {
   FileBox,
   ExternalLink,
   Tag as TagIcon,
+  BookOpen,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useActiveWorkspace } from '@/hooks/useWorkspaces';
@@ -39,6 +40,13 @@ interface TagEntitiesResponse {
       externalUrl: string | null;
       fileUploadId: string | null;
     }>;
+    references: Array<{
+      id: string;
+      title: string;
+      authors: string | null;
+      type: string;
+      year: number | null;
+    }>;
   };
 }
 
@@ -63,7 +71,8 @@ export function TagDetailPage() {
     (data?.counts.projects ?? 0) +
     (data?.counts.links ?? 0) +
     (data?.counts.notes ?? 0) +
-    (data?.counts.documents ?? 0);
+    (data?.counts.documents ?? 0) +
+    (data?.counts.references ?? 0);
 
   return (
     <div className="space-y-4">
@@ -246,6 +255,39 @@ export function TagDetailPage() {
                         <Badge variant="outline" className="text-xs">
                           {d.fileUploadId ? 'Upload' : d.externalUrl ? 'External' : '?'}
                         </Badge>
+                      </div>
+                    </RouterLink>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {data.items.references.length > 0 && (
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                  <BookOpen className="h-4 w-4" />
+                  Jurnal & Referensi ({data.counts.references})
+                </h3>
+                <div className="divide-y">
+                  {data.items.references.map((r) => (
+                    <RouterLink
+                      key={r.id}
+                      to="/references"
+                      className="block py-2 hover:bg-muted/40 rounded px-2 -mx-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium block truncate">{r.title}</span>
+                          {r.authors && (
+                            <span className="text-xs text-muted-foreground">{r.authors}</span>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="text-xs">{r.type}</Badge>
+                        {r.year && (
+                          <Badge variant="secondary" className="text-xs">{r.year}</Badge>
+                        )}
                       </div>
                     </RouterLink>
                   ))}

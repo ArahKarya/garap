@@ -33,7 +33,7 @@ searchRouter.get(
       const insensitive = { contains: term, mode: 'insensitive' as const };
       const wsScope = q.workspaceId ? { workspaceId: q.workspaceId } : {};
 
-      const [tasks, projects, links, notes, documents, tags] = await Promise.all([
+      const [tasks, projects, links, notes, documents, references, tags] = await Promise.all([
         prisma.task.findMany({
           where: {
             ownerId,
@@ -99,6 +99,23 @@ searchRouter.get(
             fileUploadId: true,
           },
         }),
+        prisma.reference.findMany({
+          where: {
+            ownerId,
+            deletedAt: null,
+            ...wsScope,
+            OR: [
+              { title: insensitive },
+              { authors: insensitive },
+              { source: insensitive },
+              { abstract: insensitive },
+              { doi: insensitive },
+            ],
+          },
+          take: q.limit,
+          orderBy: { updatedAt: 'desc' },
+          select: { id: true, title: true, authors: true, type: true, year: true },
+        }),
         prisma.tag.findMany({
           where: { ownerId, name: insensitive },
           take: q.limit,
@@ -110,13 +127,14 @@ searchRouter.get(
       res.json(
         ok({
           query: term,
-          results: { tasks, projects, links, notes, documents, tags },
+          results: { tasks, projects, links, notes, documents, references, tags },
           totals: {
             tasks: tasks.length,
             projects: projects.length,
             links: links.length,
             notes: notes.length,
             documents: documents.length,
+            references: references.length,
             tags: tags.length,
           },
         }),

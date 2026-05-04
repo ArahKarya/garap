@@ -9,6 +9,7 @@ import {
   StickyNote,
   FileBox,
   Briefcase,
+  BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -77,6 +78,13 @@ const groups: TrashGroupConfig[] = [
     label: 'Documents',
     icon: FileBox,
     endpoint: '/documents',
+    labelOf: (i) => i.title ?? '(tanpa judul)',
+  },
+  {
+    key: 'references',
+    label: 'References',
+    icon: BookOpen,
+    endpoint: '/references',
     labelOf: (i) => i.title ?? '(tanpa judul)',
   },
 ];

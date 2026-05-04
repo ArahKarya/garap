@@ -11,6 +11,7 @@ import {
   Tag as TagIcon,
   ExternalLink,
   Loader2,
+  BookOpen,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useActiveWorkspace } from '@/hooks/useWorkspaces';
@@ -40,12 +41,19 @@ interface SearchResults {
       externalUrl: string | null;
       fileUploadId: string | null;
     }>;
+    references: Array<{
+      id: string;
+      title: string;
+      authors: string | null;
+      type: string;
+      year: number | null;
+    }>;
     tags: Array<{ id: string; name: string; color: string | null }>;
   };
   totals: Record<string, number>;
 }
 
-type EntityKind = 'all' | 'tasks' | 'projects' | 'links' | 'notes' | 'documents' | 'tags';
+type EntityKind = 'all' | 'tasks' | 'projects' | 'links' | 'notes' | 'documents' | 'references' | 'tags';
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams();
@@ -134,6 +142,7 @@ export function SearchPage() {
             <TabsTrigger value="links">Links ({totals.links ?? 0})</TabsTrigger>
             <TabsTrigger value="notes">Notes ({totals.notes ?? 0})</TabsTrigger>
             <TabsTrigger value="documents">Documents ({totals.documents ?? 0})</TabsTrigger>
+            <TabsTrigger value="references">Referensi ({totals.references ?? 0})</TabsTrigger>
             <TabsTrigger value="tags">Tags ({totals.tags ?? 0})</TabsTrigger>
           </TabsList>
 
@@ -143,6 +152,7 @@ export function SearchPage() {
             {r.links.length > 0 && <LinksGroup items={r.links} />}
             {r.notes.length > 0 && <NotesGroup items={r.notes} />}
             {r.documents.length > 0 && <DocumentsGroup items={r.documents} />}
+            {r.references.length > 0 && <ReferencesGroup items={r.references} />}
             {r.tags.length > 0 && <TagsGroup items={r.tags} />}
           </TabsContent>
           <TabsContent value="tasks">
@@ -159,6 +169,9 @@ export function SearchPage() {
           </TabsContent>
           <TabsContent value="documents">
             <DocumentsGroup items={r.documents} />
+          </TabsContent>
+          <TabsContent value="references">
+            <ReferencesGroup items={r.references} />
           </TabsContent>
           <TabsContent value="tags">
             <TagsGroup items={r.tags} />
@@ -305,6 +318,33 @@ function DocumentsGroup({ items }: { items: SearchResults['results']['documents'
             <Badge variant="outline" className="text-xs">
               {d.fileUploadId ? 'Upload' : d.externalUrl ? 'External' : '?'}
             </Badge>
+          </div>
+        </RouterLink>
+      ))}
+    </Section>
+  );
+}
+
+function ReferencesGroup({ items }: { items: SearchResults['results']['references'] }) {
+  return (
+    <Section title="Jurnal & Referensi" icon={BookOpen} count={items.length}>
+      {items.map((r) => (
+        <RouterLink
+          key={r.id}
+          to="/references"
+          className="block py-2 hover:bg-muted/40 rounded px-2 -mx-2"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <span className="font-medium">{r.title}</span>
+              {r.authors && (
+                <span className="text-xs text-muted-foreground ml-2">{r.authors}</span>
+              )}
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Badge variant="outline" className="text-xs">{r.type}</Badge>
+              {r.year && <Badge variant="secondary" className="text-xs">{r.year}</Badge>}
+            </div>
           </div>
         </RouterLink>
       ))}

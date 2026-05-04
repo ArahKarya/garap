@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0] — 2026-05-04
+
+### Reference / Bibliography
+
+- New `Reference` entity for storing books, journal articles, conference papers,
+  theses, etc. with bibliographic fields (authors, year, source, volume, issue,
+  pages, DOI, ISBN, URL, abstract, notes, citation)
+- 9 reference types: BOOK, JOURNAL_ARTICLE, CONFERENCE_PAPER, THESIS,
+  BOOK_CHAPTER, REPORT, WEBSITE, PREPRINT, OTHER
+- Workspace + project scoping like other entities; soft delete with Trash
+- Tag support (entity type `REFERENCE` added to polymorphic tagging)
+- ReferencesPage: search by title/authors/DOI, filter by type, tag filter
+- 3 new permissions: `reference:read|write|delete`
+- Integrated into `/api/search`, command palette (Cmd+K), tag detail page,
+  and trash
+- Sidebar: "Jurnal & Referensi" entry
+
 ## [0.4.1] — 2026-05-03
 
 ### Search & Tag — UX improvements

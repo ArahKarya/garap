@@ -10,6 +10,7 @@ import {
   Loader2,
   StickyNote,
   FileBox,
+  BookOpen,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,13 @@ interface SearchResults {
       title: string;
       externalUrl: string | null;
       fileUploadId: string | null;
+    }>;
+    references: Array<{
+      id: string;
+      title: string;
+      authors: string | null;
+      type: string;
+      year: number | null;
     }>;
     tags: Array<{ id: string; name: string; color: string | null }>;
   };
@@ -148,6 +156,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     results.links.length ||
                     results.notes.length ||
                     results.documents.length ||
+                    results.references.length ||
                     results.tags.length) &&
                     'hidden',
                 )}
@@ -264,6 +273,28 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     <span className="text-xs text-muted-foreground">
                       {d.fileUploadId ? 'UPLOAD' : 'EXTERNAL'}
                     </span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {results && results.references.length > 0 && (
+              <Command.Group
+                heading="Jurnal & Referensi"
+                className="text-xs font-semibold text-muted-foreground px-2 pb-1 pt-2 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5"
+              >
+                {results.references.map((r) => (
+                  <Command.Item
+                    key={r.id}
+                    value={`ref-${r.id}`}
+                    onSelect={() => go('/references')}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
+                  >
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1 truncate">{r.title}</span>
+                    {r.year && (
+                      <span className="text-xs text-muted-foreground">{r.year}</span>
+                    )}
                   </Command.Item>
                 ))}
               </Command.Group>

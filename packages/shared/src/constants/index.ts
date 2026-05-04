@@ -60,6 +60,9 @@ export const PERMISSIONS = {
   DOCUMENT_READ: 'document:read',
   DOCUMENT_WRITE: 'document:write',
   DOCUMENT_DELETE: 'document:delete',
+  REFERENCE_READ: 'reference:read',
+  REFERENCE_WRITE: 'reference:write',
+  REFERENCE_DELETE: 'reference:delete',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -132,5 +135,30 @@ export const LINK_PLATFORMS = [
 ] as const;
 export type LinkPlatform = (typeof LINK_PLATFORMS)[number];
 
-export const TAGGABLE_ENTITIES = ['TASK', 'PROJECT', 'LINK', 'NOTE', 'DOCUMENT'] as const;
+export const TAGGABLE_ENTITIES = ['TASK', 'PROJECT', 'LINK', 'NOTE', 'DOCUMENT', 'REFERENCE'] as const;
 export type TaggableEntity = (typeof TAGGABLE_ENTITIES)[number];
+
+export const REFERENCE_TYPES = [
+  'BOOK',
+  'JOURNAL_ARTICLE',
+  'CONFERENCE_PAPER',
+  'THESIS',
+  'BOOK_CHAPTER',
+  'REPORT',
+  'WEBSITE',
+  'PREPRINT',
+  'OTHER',
+] as const;
+export type ReferenceType = (typeof REFERENCE_TYPES)[number];
+
+export const REFERENCE_TYPE_LABELS: Record<ReferenceType, string> = {
+  BOOK: 'Buku',
+  JOURNAL_ARTICLE: 'Artikel Jurnal',
+  CONFERENCE_PAPER: 'Paper Konferensi',
+  THESIS: 'Skripsi/Tesis/Disertasi',
+  BOOK_CHAPTER: 'Bab Buku',
+  REPORT: 'Laporan',
+  WEBSITE: 'Website',
+  PREPRINT: 'Preprint',
+  OTHER: 'Lainnya',
+};

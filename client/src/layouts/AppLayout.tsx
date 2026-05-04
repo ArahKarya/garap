@@ -21,6 +21,7 @@ import {
   Search as SearchIcon,
   Calendar as CalendarIcon,
   Briefcase,
+  BookOpen,
 } from 'lucide-react';
 import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandPalette';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -61,6 +62,7 @@ const nav: NavItem[] = [
   { to: '/links', label: 'Links', icon: LinkIcon, permission: 'link:read' },
   { to: '/notes', label: 'Notes', icon: StickyNote, permission: 'note:read' },
   { to: '/documents', label: 'Documents', icon: FileBox, permission: 'document:read' },
+  { to: '/references', label: 'Jurnal & Referensi', icon: BookOpen, permission: 'reference:read' },
   { to: '/tags', label: 'Tags', icon: TagIcon, permission: 'tag:read' },
   { to: '/workspaces', label: 'Workspaces', icon: Briefcase, permission: 'workspace:read' },
   { to: '/trash', label: 'Trash', icon: Trash2, permission: null },
