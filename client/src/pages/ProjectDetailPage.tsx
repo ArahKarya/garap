@@ -3,6 +3,7 @@ import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   CheckSquare,
+  CheckCircle2,
   Link as LinkIcon,
   StickyNote,
   FileBox,
@@ -154,8 +155,11 @@ export function ProjectDetailPage() {
   }
 
   const project = projectQuery.data;
-  const totalTasks = tasksQuery.data?.length ?? 0;
-  const doneTasks = tasksQuery.data?.filter((t) => t.status === 'DONE').length ?? 0;
+  const allTasks = tasksQuery.data ?? [];
+  const activeTasks = allTasks.filter((t) => t.status !== 'DONE' && t.status !== 'CANCELLED');
+  const doneTasksList = allTasks.filter((t) => t.status === 'DONE' || t.status === 'CANCELLED');
+  const totalTasks = allTasks.length;
+  const doneTasks = doneTasksList.length;
 
   return (
     <div className="space-y-4">
@@ -222,7 +226,11 @@ export function ProjectDetailPage() {
         <TabsList>
           <TabsTrigger value="tasks">
             <CheckSquare className="h-3.5 w-3.5" />
-            Tasks ({totalTasks})
+            Tasks ({activeTasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="tasks-done">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Selesai ({doneTasks})
           </TabsTrigger>
           <TabsTrigger value="links">
             <LinkIcon className="h-3.5 w-3.5" />
@@ -248,27 +256,56 @@ export function ProjectDetailPage() {
             </div>
           )}
           {tasksQuery.isLoading && <Skeleton className="h-12 w-full" />}
-          {!tasksQuery.isLoading && (!tasksQuery.data || tasksQuery.data.length === 0) && (
-            <EmptyState description="Belum ada task di project ini." />
+          {!tasksQuery.isLoading && activeTasks.length === 0 && (
+            <EmptyState description="Belum ada task aktif di project ini." />
           )}
-          {tasksQuery.data?.map((t) => (
+          {activeTasks.map((t) => (
             <RouterLink
               key={t.id}
-              to="/tasks"
+              to={`/tasks?id=${t.id}`}
               className="flex items-center justify-between gap-2 rounded-md border p-3 hover:bg-accent transition-colors"
             >
               <div className="min-w-0 flex-1">
-                <p
-                  className={`font-medium text-sm truncate ${t.status === 'DONE' ? 'line-through text-muted-foreground' : ''}`}
-                >
-                  {t.title}
-                </p>
+                <p className="font-medium text-sm truncate">{t.title}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="outline" className="text-xs">
                   {t.status}
                 </Badge>
                 <Badge variant={priorityVariant(t.priority)} className="text-xs">
+                  {t.priority}
+                </Badge>
+                {t.dueDate && (
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(t.dueDate).toLocaleDateString('id-ID')}
+                  </span>
+                )}
+              </div>
+            </RouterLink>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="tasks-done" className="space-y-2">
+          {tasksQuery.isLoading && <Skeleton className="h-12 w-full" />}
+          {!tasksQuery.isLoading && doneTasksList.length === 0 && (
+            <EmptyState description="Belum ada task yang selesai. Tandai task sebagai selesai untuk muncul di sini." />
+          )}
+          {doneTasksList.map((t) => (
+            <RouterLink
+              key={t.id}
+              to={`/tasks?id=${t.id}`}
+              className="flex items-center justify-between gap-2 rounded-md border p-3 hover:bg-accent transition-colors"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate text-muted-foreground">
+                  {t.title}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge variant="secondary" className="text-xs">
+                  {t.status}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
                   {t.priority}
                 </Badge>
                 {t.dueDate && (

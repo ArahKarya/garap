@@ -157,7 +157,7 @@ export function TaskDetailDialog({
             {taskQuery.isLoading ? (
               <Skeleton className="h-7 w-2/3" />
             ) : (
-              <span className={isDone ? 'line-through text-muted-foreground' : ''}>
+              <span className={isDone ? 'text-muted-foreground' : ''}>
                 {t?.title ?? 'Task'}
               </span>
             )}
@@ -248,7 +248,7 @@ export function TaskDetailDialog({
                           )}
                           <span
                             className={
-                              sDone ? 'line-through text-muted-foreground flex-1' : 'flex-1'
+                              sDone ? 'text-muted-foreground flex-1' : 'flex-1'
                             }
                           >
                             {s.title}

@@ -192,7 +192,7 @@ export function TasksPage() {
       const params: Record<string, string | number | boolean> = {
         limit: 200,
         // Always include completed/cancelled — user wants to see DONE tasks
-        // alongside active ones (with line-through styling).
+        // alongside active ones (rendered in muted color, sorted to the bottom).
         includeCompleted: true,
       };
       if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
@@ -853,7 +853,7 @@ function TaskRowGroup({
               onClick={() => onView(t.id)}
               className={cn(
                 'text-left hover:underline cursor-pointer',
-                t.status === 'DONE' && 'line-through',
+                t.status === 'DONE' && 'text-muted-foreground',
               )}
             >
               {t.title}
@@ -1163,7 +1163,7 @@ function KanbanCard({ task: t, onView, onChangeStatus, subtaskCount, parentTitle
       <p
         className={cn(
           'text-sm font-medium leading-snug line-clamp-3 flex items-start gap-1.5',
-          t.status === 'DONE' && 'line-through',
+          t.status === 'DONE' && 'text-muted-foreground',
         )}
       >
         <span className="flex-1">{t.title}</span>
