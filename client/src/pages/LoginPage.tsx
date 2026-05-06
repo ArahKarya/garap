@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -320,9 +321,10 @@ function BrandShowcase() {
       />
 
       <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-        {/* Top: logo + name */}
+        {/* Top: logo + name. Showcase pane is always primary-tinted, so
+            force the white-ink logo regardless of OS dark/light mode. */}
         <div className="inline-flex items-center gap-3">
-          <BrandLogo className="h-10 w-10" />
+          <BrandLogo forceDark className="h-10 w-10" />
           <div>
             <p className="font-heading text-2xl font-bold leading-none">
               {BRANDING.APP_NAME}
@@ -371,25 +373,3 @@ function BrandShowcase() {
   );
 }
 
-interface BrandLogoProps {
-  className?: string;
-}
-
-// Logo color flips with theme — dark logo on light bg, white logo on dark bg
-// or on the gradient showcase pane (which is always primary-tinted).
-function BrandLogo({ className }: BrandLogoProps) {
-  return (
-    <>
-      <img
-        src={BRANDING.LOGO_LIGHT}
-        alt={BRANDING.APP_NAME}
-        className={`${className ?? ''} dark:hidden lg:hidden`}
-      />
-      <img
-        src={BRANDING.LOGO_DARK}
-        alt={BRANDING.APP_NAME}
-        className={`${className ?? ''} hidden dark:block lg:block`}
-      />
-    </>
-  );
-}

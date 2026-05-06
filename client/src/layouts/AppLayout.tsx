@@ -26,6 +26,7 @@ import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandP
 import { NotificationBell } from '@/components/NotificationBell';
 import { QuickAddTaskDialog, useQuickAddShortcut } from '@/components/QuickAddTaskDialog';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
+import { BrandLogo } from '@/components/BrandLogo';
 import { BRANDING } from '@panggonmikir/shared';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
@@ -183,11 +184,7 @@ export function AppLayout() {
             collapsed && 'justify-center px-2',
           )}
         >
-          <img
-            src={BRANDING.LOGO_DARK}
-            alt={BRANDING.APP_NAME}
-            className="h-7 w-7 shrink-0"
-          />
+          <BrandLogo className="h-7 w-7 shrink-0" />
           {!collapsed && (
             <span className="ml-2 font-heading text-base font-semibold">{BRANDING.APP_NAME}</span>
           )}
@@ -225,11 +222,7 @@ export function AppLayout() {
         <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground">
           <SheetHeader className="h-14 flex-row items-center border-b border-sidebar-border px-4">
             <SheetTitle className="flex items-center gap-2 text-sidebar-foreground">
-              <img
-                src={BRANDING.LOGO_DARK}
-                alt={BRANDING.APP_NAME}
-                className="h-7 w-7"
-              />
+              <BrandLogo className="h-7 w-7" />
               {BRANDING.APP_NAME}
             </SheetTitle>
           </SheetHeader>
