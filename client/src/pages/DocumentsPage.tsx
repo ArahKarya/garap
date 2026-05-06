@@ -379,7 +379,7 @@ export function DocumentsPage() {
 
       {/* Create dialog (upload or external) */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tambah Document</DialogTitle>
           </DialogHeader>
@@ -552,7 +552,7 @@ export function DocumentsPage() {
 
       {/* Edit dialog (metadata + tags) */}
       <Dialog open={editingId !== null} onOpenChange={(o) => !o && setEditingId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Document</DialogTitle>
           </DialogHeader>

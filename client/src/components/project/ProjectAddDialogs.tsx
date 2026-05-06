@@ -87,7 +87,7 @@ export function AddTaskDialog({ workspaceId, projectId }: BaseProps) {
           <Plus className="h-4 w-4" /> Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Task baru</DialogTitle>
         </DialogHeader>
@@ -196,7 +196,7 @@ export function AddLinkDialog({ workspaceId, projectId }: BaseProps) {
           <Plus className="h-4 w-4" /> Link
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Link baru</DialogTitle>
         </DialogHeader>
@@ -288,7 +288,7 @@ export function AddNoteDialog({ workspaceId, projectId }: BaseProps) {
           <Plus className="h-4 w-4" /> Note
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Note baru</DialogTitle>
         </DialogHeader>
@@ -421,7 +421,7 @@ export function AddDocumentDialog({ workspaceId, projectId }: BaseProps) {
           <Plus className="h-4 w-4" /> Document
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Document baru</DialogTitle>
         </DialogHeader>

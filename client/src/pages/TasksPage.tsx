@@ -598,7 +598,7 @@ export function TasksPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Task' : 'Task Baru'}</DialogTitle>
           </DialogHeader>
@@ -759,7 +759,7 @@ export function TasksPage() {
               <TagPicker entityType="TASK" entityId={editingId} />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-background -mx-6 px-6 py-3 border-t -mb-6">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Batal
               </Button>

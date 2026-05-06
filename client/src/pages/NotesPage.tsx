@@ -386,7 +386,7 @@ export function NotesPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Note' : 'Note Baru'}</DialogTitle>
           </DialogHeader>
@@ -489,7 +489,7 @@ export function NotesPage() {
               <TagPicker entityType="NOTE" entityId={editingId} />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-background -mx-6 px-6 py-3 border-t -mb-6">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Batal
               </Button>

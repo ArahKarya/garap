@@ -305,7 +305,7 @@ export function SettingsPage() {
 
       {/* ── Change password dialog ───────────────────────────────────────── */}
       <Dialog open={pwOpen} onOpenChange={setPwOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ganti Password</DialogTitle>
             <DialogDescription>Minimal 8 karakter, ada huruf + angka.</DialogDescription>
@@ -371,7 +371,7 @@ export function SettingsPage() {
 
       {/* ── Reset all data dialog ────────────────────────────────────────── */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
