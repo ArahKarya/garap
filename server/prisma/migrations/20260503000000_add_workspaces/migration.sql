@@ -39,7 +39,8 @@ SELECT
   0,
   CURRENT_TIMESTAMP,
   CURRENT_TIMESTAMP
-FROM (SELECT DISTINCT owner_id FROM "projects") p;
+FROM (SELECT DISTINCT owner_id FROM "projects") p
+ON CONFLICT ("owner_id", "name") DO NOTHING;
 
 -- Assign each project to its owner's default workspace.
 UPDATE "projects" p

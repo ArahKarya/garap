@@ -1,6 +1,26 @@
 import { z } from 'zod';
 import { REFERENCE_TYPES } from '../constants/index.js';
 
+const PRIVATE_HOST_REGEX =
+  /^(localhost|.+\.(local|lan|internal)|127\.|10\.|0\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/i;
+
+const optionalPublicUrl = z
+  .string()
+  .max(2000)
+  .optional()
+  .nullable()
+  .or(z.literal(''))
+  .refine((v) => {
+    if (!v) return true;
+    if (!/^https?:\/\//i.test(v)) return false;
+    try {
+      const host = new URL(v).hostname.toLowerCase();
+      return !PRIVATE_HOST_REGEX.test(host);
+    } catch {
+      return false;
+    }
+  }, 'URL harus http(s) publik (hostname privat/loopback ditolak)');
+
 export const createReferenceSchema = z.object({
   workspaceId: z.string().min(1, 'Workspace wajib dipilih'),
   projectId: z.string().cuid().optional().nullable(),
@@ -14,13 +34,7 @@ export const createReferenceSchema = z.object({
   pages: z.string().trim().max(50).optional().nullable(),
   doi: z.string().trim().max(200).optional().nullable(),
   isbn: z.string().trim().max(50).optional().nullable(),
-  url: z
-    .string()
-    .url('URL tidak valid')
-    .max(2000)
-    .optional()
-    .nullable()
-    .or(z.literal('')),
+  url: optionalPublicUrl,
   abstract: z.string().trim().max(20_000).optional().nullable(),
   notes: z.string().trim().max(20_000).optional().nullable(),
   citation: z.string().trim().max(2000).optional().nullable(),

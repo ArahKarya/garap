@@ -129,7 +129,14 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           {workspaces.map((w) => (
             <DropdownMenuItem
               key={w.id}
-              onClick={() => setActiveWorkspaceId(w.id)}
+              onClick={() => {
+                if (w.id === active?.id) return;
+                setActiveWorkspaceId(w.id);
+                // Safety net: every list page bakes activeWorkspaceId into
+                // its queryKey, but invalidate-all guarantees no stale
+                // cross-workspace data flashes during the swap.
+                qc.invalidateQueries();
+              }}
               className="flex items-center gap-2"
             >
               <span

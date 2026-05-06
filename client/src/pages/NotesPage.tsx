@@ -114,11 +114,10 @@ export function NotesPage() {
   const {
     register,
     getValues,
-    handleSubmit,
     watch,
     reset,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateNoteInput>({
     resolver: zodResolver(createNoteSchema),
     defaultValues: {
@@ -493,8 +492,8 @@ export function NotesPage() {
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Batal
               </Button>
-              <Button type="submit" disabled={isSubmitting || upsertMutation.isPending}>
-                {(isSubmitting || upsertMutation.isPending) && (
+              <Button type="submit" disabled={upsertMutation.isPending}>
+                {upsertMutation.isPending && (
                   <Loader2 className="animate-spin" />
                 )}
                 Simpan

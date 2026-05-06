@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createReferenceSchema,
+  updateReferenceSchema,
   type CreateReferenceInput,
   REFERENCE_TYPES,
   REFERENCE_TYPE_LABELS,
@@ -122,7 +123,7 @@ export function ReferencesPage() {
     setValue,
     watch,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateReferenceInput>({
     resolver: zodResolver(createReferenceSchema),
     defaultValues: {
@@ -175,6 +176,7 @@ export function ReferencesPage() {
       qc.invalidateQueries({ queryKey: ['references'] });
       toast.success('Referensi dipindah ke trash');
     },
+    onError: () => toast.error('Gagal hapus referensi'),
   });
 
   const openCreate = (): void => {
@@ -369,13 +371,15 @@ export function ReferencesPage() {
                 ...raw,
                 workspaceId: raw.workspaceId || activeWorkspaceId || '',
               };
-              const parsed = createReferenceSchema.safeParse(data);
+              const schema = editingId ? updateReferenceSchema : createReferenceSchema;
+              const parsed = schema.safeParse(data);
               if (!parsed.success) {
                 const first = parsed.error.errors[0];
                 toast.error(first?.message ?? 'Validasi gagal');
                 return;
               }
-              upsertMutation.mutate(parsed.data);
+              // updateSchema yields partial; mutationFn handles PATCH vs POST
+              upsertMutation.mutate(parsed.data as CreateReferenceInput);
             }}
             className="space-y-4"
           >
@@ -527,8 +531,8 @@ export function ReferencesPage() {
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Batal
               </Button>
-              <Button type="submit" disabled={isSubmitting || upsertMutation.isPending}>
-                {(isSubmitting || upsertMutation.isPending) && (
+              <Button type="submit" disabled={upsertMutation.isPending}>
+                {upsertMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
                 Simpan

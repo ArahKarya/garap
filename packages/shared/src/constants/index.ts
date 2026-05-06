@@ -74,7 +74,6 @@ export const JOB_QUEUES = {
   NOTIFICATION: 'notification',
   CLEANUP: 'cleanup',
   // Panggon Mikir domain queues
-  LINK_METADATA: 'link-metadata',
   LINK_HEALTH: 'link-health',
   REMINDER: 'reminder',
 } as const;

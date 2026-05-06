@@ -13,8 +13,20 @@ const envSchema = z.object({
   REDIS_PORT: z.coerce.number().default(6379),
   REDIS_PASSWORD: z.string().optional(),
 
-  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 chars'),
-  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 chars'),
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(32, 'JWT_ACCESS_SECRET must be at least 32 chars')
+    .refine(
+      (v) => !v.startsWith('devonly_') && !v.startsWith('dev-placeholder'),
+      'JWT_ACCESS_SECRET appears to be a placeholder — generate a strong secret (e.g. `openssl rand -hex 32`)',
+    ),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(32, 'JWT_REFRESH_SECRET must be at least 32 chars')
+    .refine(
+      (v) => !v.startsWith('devonly_') && !v.startsWith('dev-placeholder'),
+      'JWT_REFRESH_SECRET appears to be a placeholder — generate a strong secret',
+    ),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 

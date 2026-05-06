@@ -222,11 +222,10 @@ export function TasksPage() {
   const {
     register,
     getValues,
-    handleSubmit,
     setValue,
     watch,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
@@ -278,6 +277,7 @@ export function TasksPage() {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Task dipindah ke trash');
     },
+    onError: () => toast.error('Gagal menghapus task'),
   });
 
   const completeMutation = useMutation({
@@ -288,6 +288,7 @@ export function TasksPage() {
       qc.invalidateQueries({ queryKey: ['tasks'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
+    onError: () => toast.error('Gagal mengubah status task'),
   });
 
   const setStatusMutation = useMutation({
@@ -298,6 +299,7 @@ export function TasksPage() {
       qc.invalidateQueries({ queryKey: ['tasks'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
+    onError: () => toast.error('Gagal update status'),
   });
 
   // Bulk operations — fire one HTTP per item, then invalidate. No batch
@@ -312,6 +314,7 @@ export function TasksPage() {
       toast.success(`${selectedIds.size} task ditandai`);
       setSelectedIds(new Set());
     },
+    onError: () => toast.error('Sebagian task gagal di-update'),
   });
 
   const bulkDeleteMutation = useMutation({
@@ -324,6 +327,7 @@ export function TasksPage() {
       toast.success(`${selectedIds.size} task dipindah ke trash`);
       setSelectedIds(new Set());
     },
+    onError: () => toast.error('Sebagian task gagal dihapus'),
   });
 
   const bulkSetStatusMutation = useMutation({
@@ -336,6 +340,7 @@ export function TasksPage() {
       toast.success(`${vars.ids.length} task → ${statusLabel[vars.status]}`);
       setSelectedIds(new Set());
     },
+    onError: () => toast.error('Sebagian task gagal di-update'),
   });
 
   const toggleSelected = (id: string): void => {
@@ -763,8 +768,8 @@ export function TasksPage() {
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Batal
               </Button>
-              <Button type="submit" disabled={isSubmitting || upsertMutation.isPending}>
-                {(isSubmitting || upsertMutation.isPending) && (
+              <Button type="submit" disabled={upsertMutation.isPending}>
+                {upsertMutation.isPending && (
                   <Loader2 className="animate-spin" />
                 )}
                 Simpan
@@ -859,10 +864,14 @@ function TaskRowGroup({
               {t.title}
             </button>
             {t.recurrence && (
-              <Repeat
-                className="h-3 w-3 text-info"
-                aria-label={`Berulang ${t.recurrence}`}
-              />
+              <Badge
+                variant="outline"
+                className="text-[10px] gap-1 border-info/40 text-info"
+                title={`Berulang ${t.recurrence}`}
+              >
+                <Repeat className="h-3 w-3" />
+                {RECURRENCE_LABELS[t.recurrence as keyof typeof RECURRENCE_LABELS] ?? t.recurrence}
+              </Badge>
             )}
             {children.length > 0 && (
               <Badge variant="outline" className="text-[10px]">

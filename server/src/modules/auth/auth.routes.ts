@@ -13,6 +13,7 @@ import { env } from '../../config/env.js';
 import { logger } from '../../lib/logger.js';
 import * as authService from './auth.service.js';
 import * as googleService from './google.service.js';
+import { issueState, verifyState } from './oauth-state.js';
 
 export const authRouter = Router();
 
@@ -38,9 +39,12 @@ const refreshLimiter = rateLimit({
 // ─── Google OAuth ─────────────────────────────────────────────────────────
 // GET  /api/auth/google         — returns the Google consent URL the SPA opens
 // POST /api/auth/google         — body: { idToken } OR { code }; returns tokens
-authRouter.get('/google', (req, res) => {
-  const state = typeof req.query.state === 'string' ? req.query.state : undefined;
-  res.json(ok({ url: googleService.buildAuthUrl(state) }));
+authRouter.get('/google', (_req, res) => {
+  // Always issue a fresh signed state — client MUST forward the same value
+  // back via the callback so we can verify the round-trip wasn't initiated
+  // by an attacker.
+  const state = issueState();
+  res.json(ok({ url: googleService.buildAuthUrl(state), state }));
 });
 
 authRouter.post('/google', credentialLimiter, validate(googleLoginSchema), async (req, res, next) => {
@@ -66,6 +70,7 @@ authRouter.post('/google', credentialLimiter, validate(googleLoginSchema), async
 authRouter.get('/google/callback', async (req, res, next) => {
   try {
     const code = typeof req.query.code === 'string' ? req.query.code : null;
+    const stateParam = typeof req.query.state === 'string' ? req.query.state : null;
     const errorParam = typeof req.query.error === 'string' ? req.query.error : null;
     const appOrigin = env.APP_URL.replace(/\/+$/, '');
     if (errorParam) {
@@ -74,6 +79,13 @@ authRouter.get('/google/callback', async (req, res, next) => {
     }
     if (!code) {
       return res.redirect(`${appOrigin}/login?error=missing_code`);
+    }
+    // Verify the state HMAC — defends against login-CSRF where an attacker
+    // initiates the flow and tricks a victim's browser into completing it.
+    const stateCheck = verifyState(stateParam);
+    if (!stateCheck.ok) {
+      logger.warn({ reason: stateCheck.reason }, '[google/callback] state verification failed');
+      return res.redirect(`${appOrigin}/login?error=invalid_state`);
     }
 
     const { user, tokens } = await googleService.loginWithGoogle(

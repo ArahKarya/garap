@@ -102,16 +102,27 @@ export function TaskDetailDialog({
 
   const t = taskQuery.data;
 
+  const invalidateTaskCaches = (): void => {
+    qc.invalidateQueries({ queryKey: ['task-detail', taskId] });
+    qc.invalidateQueries({ queryKey: ['tasks'] });
+    qc.invalidateQueries({ queryKey: ['dashboard'] });
+    // Project-scoped cache: prefix-invalidate so any [projectId] permutation
+    // is dropped (consistent with how ProjectAddDialogs writes the key).
+    qc.invalidateQueries({ queryKey: ['project-tasks'] });
+    if (taskQuery.data?.projectId) {
+      qc.invalidateQueries({
+        queryKey: ['project-tasks', taskQuery.data.projectId],
+      });
+    }
+  };
+
   const completeMutation = useMutation({
     mutationFn: async () => {
       if (!taskId) return;
       await api.post(`/tasks/${taskId}/complete`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['task-detail', taskId] });
-      qc.invalidateQueries({ queryKey: ['tasks'] });
-      qc.invalidateQueries({ queryKey: ['project-tasks'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      invalidateTaskCaches();
       toast.success('Status task diperbarui');
     },
     onError: () => toast.error('Gagal update status'),
@@ -123,9 +134,7 @@ export function TaskDetailDialog({
       await api.delete(`/tasks/${taskId}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tasks'] });
-      qc.invalidateQueries({ queryKey: ['project-tasks'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      invalidateTaskCaches();
       toast.success('Task dipindah ke trash');
       onOpenChange(false);
     },

@@ -20,5 +20,22 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        // Split heavy vendor deps into their own chunks so the initial bundle
+        // doesn't ship libraries that aren't on the first paint path.
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query', 'zustand'],
+          'vendor-form': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'vendor-dnd': ['@dnd-kit/core'],
+          'vendor-date': ['date-fns'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-radix': ['@radix-ui/react-dialog'],
+          'vendor-cmdk': ['cmdk'],
+        },
+      },
+    },
   },
 });

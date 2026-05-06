@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.6.0] — 2026-05-06
+
+### Task UX
+
+- Click task title → opens TaskDetailDialog (read-only view + edit pivot)
+  with status/priority/recurrence badges, sub-task checklist, full tag picker,
+  and per-task link attachments
+- New Link.taskId nullable FK (migration `20260506000000_add_task_id_to_links`):
+  attach work URLs (Google Docs, Figma, GitHub PR) directly to a task
+- Tasks list always shows DONE/CANCELLED in muted color (was hidden); active
+  tasks ranked above completed for focus
+- Project detail page: separate "Selesai" tab for completed tasks
+- Inline search bar on Tasks (debounced 250ms, server-side title/desc filter)
+- Inline TagPicker (replaced base-ui Popover that was conflicting with Radix
+  Dialog portal — clicks now register reliably)
+- Refresh metadata preserves user-edited title/description (only fills if empty)
+
+### Workspace management
+
+- New /workspaces page: edit, set default, archive/unarchive, delete; non-default
+  guard rails
+- "Kelola workspace" link in sidebar switcher dropdown
+- Sticky DialogFooter on long-form dialogs (Notes, Tasks edit, References) so
+  Save button is always reachable; max-h-[90vh] overflow on all form dialogs
+
+### Bug fixes
+
+- Dashboard now properly workspace-scoped (was leaking orphan tasks across
+  workspaces via legacy OR-filter)
+- Task list 422 silent failure on `limit>100` (raised cap to 500)
+- Form workspaceId silent validation failure when activeWorkspaceId loaded
+  late (added useEffect sync)
+- Form Save button silent failure on Zod errors (manual onSubmit + safeParse +
+  toast)
+- Google OAuth audience mismatch (fresh `docker compose build --no-cache` +
+  fixed server/.env GOOGLE_CLIENT_ID)
+
+### Audit v2 fixes (this release)
+
+- ReferencesPage edit flow uses updateReferenceSchema (was using create
+  schema)
+- Bulk task mutations now show toast on partial failure
+- Migration `20260503000000_add_workspaces` made idempotent via
+  `ON CONFLICT (owner_id, name) DO NOTHING`
+- `/api/search` validates `workspaceId` ownership before query fan-out
+- Removed dead currency utility (formatIDR/parseIDR — ArahKarya skeleton
+  leftover, never used)
+- Removed `server/scripts/tag-test.ts` debug script
+- Cleaned 5 unused imports flagged by ESLint
+- TaskDetailDialog cache invalidation centralized + `[project-tasks, projectId]`
+  exact key when available
+
 ## [0.5.0] — 2026-05-04
 
 ### Reference / Bibliography

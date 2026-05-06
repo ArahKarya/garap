@@ -33,11 +33,9 @@ export function startWorkers() {
     createWorker(JOB_QUEUES.CLEANUP, cleanupProcessor),
     createWorker(JOB_QUEUES.REMINDER, reminderRouter),
     createWorker(JOB_QUEUES.LINK_HEALTH, linkHealthProcessor),
-    createWorker(JOB_QUEUES.LINK_METADATA, async (job) => {
-      // Reserved for async metadata fetch. For now, link create does it sync.
-      logger.debug({ jobId: job.id }, 'link-metadata job (no-op)');
-      return { ok: true };
-    }),
+    // (LINK_METADATA queue retired — link.service.ts fetches metadata
+    // synchronously on create. Re-introduce only when the request path is
+    // actually too slow to hold open.)
   ];
   logger.info(`[worker] started ${workers.length} workers`);
 

@@ -33,23 +33,25 @@ Settings, Notifications, File Upload, Job Queue, Bull Board) dipakai apa adanya.
 | PostgreSQL | 5439 | 5432 |
 | Redis | 6380 | 6379 |
 
-## Domain Model (6 entitas inti)
+## Domain Model (7 entitas inti)
 
 Lihat `server/prisma/schema.prisma`. Semua punya `ownerId`, `createdAt`,
 `updatedAt`, `deletedAt` (soft delete). Hierarki:
-**Workspace → Project → {Task, Link, Note, Document}**.
-Task/Link/Note/Document punya FK langsung ke Workspace (NOT NULL) plus FK
-opsional ke Project. Bisa di-tag via `EntityTag` polymorphic.
+**Workspace → Project → {Task, Link, Note, Document, Reference}**.
+Task/Link/Note/Document/Reference punya FK langsung ke Workspace (NOT NULL)
+plus FK opsional ke Project. Link juga bisa attached ke Task spesifik
+(nullable `taskId`). Bisa di-tag via `EntityTag` polymorphic.
 
 | Model | Tujuan | Phase |
 |---|---|---|
 | `Workspace` | Container per perusahaan/konteks; root hierarki | 2 |
 | `Task` | Todo + due date + prioritas + sub-task hierarchy + recurrence | 1 |
 | `Project` | Container task/link/note/document + milestones (dalam workspace) | 1 |
-| `Link` | Bookmark multi-platform (GDrive/GitHub/Figma/Notion/dll) dengan og-tag metadata | 1 |
+| `Link` | Bookmark multi-platform (og-tag metadata); bisa attached ke task | 1 |
 | `Tag` | Universal tag (polymorphic via `EntityTag`) | 1 |
 | `Note` | Markdown notes (backlink antar entitas) | 2 |
 | `Document` | File upload lokal atau pointer ke external_url | 2 |
+| `Reference` | Bibliografi: buku, jurnal, paper, thesis, dengan DOI/ISBN/authors | 2 |
 
 ## Phase Plan
 
@@ -75,9 +77,9 @@ Login JWT lokal (email/password) tetap tersedia sebagai fallback dev/break-glass
 
 ## Permissions Tambahan
 
-Di luar 16 permission bawaan ArahKarya, Panggon Mikir tambah 20 permission domain
+Di luar 16 permission bawaan ArahKarya, Panggon Mikir tambah 23 permission domain
 (`workspace:*`, `task:*`, `project:*`, `link:*`, `tag:*`, `note:*`,
-`document:*`). Lihat `packages/shared/src/constants/index.ts`.
+`document:*`, `reference:*`). Lihat `packages/shared/src/constants/index.ts`.
 
 Solo-user app — user pertama otomatis dapat role `SUPER_ADMIN` dan bypass semua
 permission check, jadi seluruh permission existing untuk persiapan masa depan
@@ -134,6 +136,7 @@ benar-benar berat dan butuh repository abstraction.
 | `tags` | Simple | CRUD universal |
 | `notes` | Simple | CRUD markdown |
 | `documents` | Simple | Upload + external URL + path-traversal guard |
+| `references` | Simple | Bibliografi: 9 type, search judul/authors/DOI |
 
 ## Testing
 

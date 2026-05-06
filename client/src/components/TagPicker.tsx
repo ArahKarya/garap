@@ -122,9 +122,10 @@ export function TagPicker({ entityType, entityId }: TagPickerProps) {
 
   if (!entityId) {
     return (
-      <p className="text-xs text-muted-foreground italic">
-        Tag tersedia setelah disimpan.
-      </p>
+      <div className="flex items-center gap-2 rounded-md border border-dashed border-input bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <TagIcon className="h-3.5 w-3.5 shrink-0" />
+        <span>Simpan dulu untuk menambahkan tag.</span>
+      </div>
     );
   }
 

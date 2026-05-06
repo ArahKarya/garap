@@ -6,7 +6,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Bell,
   Menu,
   ChevronsLeft,
   User as UserIcon,

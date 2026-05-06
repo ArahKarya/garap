@@ -6,7 +6,6 @@ import {
   createWorkspaceSchema,
   updateWorkspaceSchema,
   type CreateWorkspaceInput,
-  type UpdateWorkspaceInput,
 } from '@panggonmikir/shared';
 import {
   Plus,
