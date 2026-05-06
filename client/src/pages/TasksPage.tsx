@@ -21,6 +21,7 @@ import {
   Columns as KanbanIcon,
   ChevronRight,
   Repeat,
+  Search as SearchIcon,
 } from 'lucide-react';
 import {
   DndContext,
@@ -168,20 +169,37 @@ export function TasksPage() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [view, setView] = useState<ViewMode>('list');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
   const { activeWorkspaceId } = useActiveWorkspace();
 
+  // Debounce search input by 250ms.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 250);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
   const tasksQuery = useQuery({
-    queryKey: ['tasks', view === 'kanban' ? 'all' : statusFilter, selectedTagIds, activeWorkspaceId],
+    queryKey: [
+      'tasks',
+      view === 'kanban' ? 'all' : statusFilter,
+      selectedTagIds,
+      activeWorkspaceId,
+      search,
+    ],
     enabled: !!activeWorkspaceId,
     queryFn: async () => {
-      const params: Record<string, string | number | boolean> = { limit: 200 };
+      const params: Record<string, string | number | boolean> = {
+        limit: 200,
+        // Always include completed/cancelled — user wants to see DONE tasks
+        // alongside active ones (with line-through styling).
+        includeCompleted: true,
+      };
       if (activeWorkspaceId) params.workspaceId = activeWorkspaceId;
-      if (view === 'kanban') {
-        params.includeCompleted = true;
-      } else if (statusFilter !== 'ALL') {
+      if (view !== 'kanban' && statusFilter !== 'ALL') {
         params.status = statusFilter;
-        params.includeCompleted = true;
       }
+      if (search) params.search = search;
       if (selectedTagIds.length > 0) {
         params.tagIds = selectedTagIds.join(',');
       }
@@ -367,6 +385,8 @@ export function TasksPage() {
   };
 
   // Build a parent-children tree for the list view + count subtasks for cards.
+  // Active tasks ranked above completed/cancelled so the list defaults to
+  // showing what still needs work first; DONE/CANCELLED still visible below.
   const { roots, childrenByParent, byId } = useMemo(() => {
     const tasks = tasksQuery.data ?? [];
     const byId = new Map<string, TaskRow>();
@@ -379,7 +399,21 @@ export function TasksPage() {
         childrenByParent.set(t.parentId, arr);
       }
     }
-    const roots = tasks.filter((t) => !t.parentId || !byId.has(t.parentId));
+    const finalRank: Record<TaskStatus, number> = {
+      TODO: 0,
+      IN_PROGRESS: 0,
+      BLOCKED: 0,
+      DONE: 1,
+      CANCELLED: 1,
+    };
+    const roots = tasks
+      .filter((t) => !t.parentId || !byId.has(t.parentId))
+      .slice()
+      .sort((a, b) => {
+        const ra = finalRank[a.status] ?? 0;
+        const rb = finalRank[b.status] ?? 0;
+        return ra - rb;
+      });
     return { roots, childrenByParent, byId };
   }, [tasksQuery.data]);
 
@@ -434,7 +468,7 @@ export function TasksPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Semua aktif</SelectItem>
+                  <SelectItem value="ALL">Semua status</SelectItem>
                   {TASK_STATUSES.map((s) => (
                     <SelectItem key={s} value={s}>
                       {statusLabel[s]}
@@ -450,6 +484,18 @@ export function TasksPage() {
           </div>
         }
       />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Cari task (judul atau deskripsi)…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
 
       <TagFilter selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
 

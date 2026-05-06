@@ -18,7 +18,7 @@ function buildWhere(q: LinkListQuery, scope: OwnerScope): Prisma.LinkWhereInput 
   }
   if (q.platform) where.platform = q.platform;
   if (q.projectId) where.projectId = q.projectId;
-
+  if (q.taskId) where.taskId = q.taskId;
   if (q.workspaceId) where.workspaceId = q.workspaceId;
   if (q.search) {
     where.OR = [
@@ -85,6 +85,18 @@ export async function create(input: CreateLinkInput, scope: OwnerScope) {
     });
     if (!project) throw NotFoundError('Project', input.projectId);
   }
+  if (input.taskId) {
+    const task = await prisma.task.findFirst({
+      where: {
+        id: input.taskId,
+        ownerId: scope.ownerId,
+        workspaceId: input.workspaceId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!task) throw NotFoundError('Task', input.taskId);
+  }
 
   const meta = await fetchMetadata(input.url);
   return prisma.link.create({
@@ -100,6 +112,7 @@ export async function create(input: CreateLinkInput, scope: OwnerScope) {
       thumbnailUrl: meta.thumbnailUrl,
       platform: input.platform ?? meta.platform,
       projectId: input.projectId ?? null,
+      taskId: input.taskId ?? null,
     },
   });
 }
@@ -117,6 +130,18 @@ export async function update(id: string, input: UpdateLinkInput, scope: OwnerSco
       select: { id: true },
     });
     if (!project) throw NotFoundError('Project', input.projectId);
+  }
+  if (input.taskId) {
+    const task = await prisma.task.findFirst({
+      where: {
+        id: input.taskId,
+        ownerId: scope.ownerId,
+        workspaceId: link.workspaceId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!task) throw NotFoundError('Task', input.taskId);
   }
   return prisma.link.update({ where: { id }, data: input });
 }

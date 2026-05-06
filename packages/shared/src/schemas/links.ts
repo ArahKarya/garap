@@ -26,6 +26,7 @@ export const createLinkSchema = z.object({
   notes: z.string().trim().max(5000).optional().nullable(),
   platform: z.enum(LINK_PLATFORMS).optional(),
   projectId: z.string().cuid().optional().nullable(),
+  taskId: z.string().cuid().optional().nullable(),
 });
 
 export const updateLinkSchema = z.object({
@@ -34,6 +35,7 @@ export const updateLinkSchema = z.object({
   notes: z.string().trim().max(5000).optional().nullable(),
   platform: z.enum(LINK_PLATFORMS).optional(),
   projectId: z.string().cuid().optional().nullable(),
+  taskId: z.string().cuid().optional().nullable(),
 });
 
 export const linkListQuerySchema = z.object({
@@ -43,6 +45,7 @@ export const linkListQuerySchema = z.object({
   platform: z.enum(LINK_PLATFORMS).optional(),
   workspaceId: z.string().optional(),
   projectId: z.string().cuid().optional(),
+  taskId: z.string().cuid().optional(),
   includeDeleted: z.coerce.boolean().optional().default(false),
   deletedOnly: z.coerce.boolean().optional().default(false),
   tagIds: z

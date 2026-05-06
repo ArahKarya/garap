@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -10,11 +11,15 @@ import {
   FolderKanban,
   CheckCircle2,
   X,
+  Link as LinkIcon,
+  ExternalLink,
+  Plus,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { RECURRENCE_LABELS, type TaskRecurrence } from '@panggonmikir/shared';
+import { RECURRENCE_LABELS } from '@panggonmikir/shared';
 import { api } from '@/lib/api';
 import {
   Dialog,
@@ -27,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import { TagPicker } from '@/components/TagPicker';
 
 type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE' | 'CANCELLED';
@@ -259,6 +265,9 @@ export function TaskDetailDialog({
             )}
 
             <Separator />
+            <TaskLinksSection task={t} />
+
+            <Separator />
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">Tags</div>
               <TagPicker entityType="TASK" entityId={t.id} />
@@ -315,5 +324,196 @@ export function TaskDetailDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Links section: list + add form ──────────────────────────────────────
+
+interface TaskLinkRow {
+  id: string;
+  url: string;
+  title: string;
+  faviconUrl: string | null;
+  platform: string;
+}
+
+function TaskLinksSection({ task }: { task: TaskDetail }) {
+  const qc = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+
+  const linksQuery = useQuery({
+    queryKey: ['task-links', task.id],
+    queryFn: async () => {
+      const res = await api.get('/links', {
+        params: { taskId: task.id, limit: 100 },
+      });
+      return res.data.data as TaskLinkRow[];
+    },
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      await api.post('/links', {
+        workspaceId: task.workspaceId,
+        taskId: task.id,
+        projectId: task.projectId ?? null,
+        url: url.trim(),
+        title: title.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['task-links', task.id] });
+      qc.invalidateQueries({ queryKey: ['links'] });
+      qc.invalidateQueries({ queryKey: ['project-links'] });
+      toast.success('Link ditambahkan');
+      setUrl('');
+      setTitle('');
+      setAdding(false);
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { error?: { message?: string } } } }).response
+              ?.data?.error?.message
+          : null;
+      toast.error(msg ?? 'Gagal tambah link');
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (linkId: string) => {
+      // Detach from task instead of deleting the link entirely.
+      await api.patch(`/links/${linkId}`, { taskId: null });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['task-links', task.id] });
+      qc.invalidateQueries({ queryKey: ['links'] });
+      toast.success('Link dilepas dari task');
+    },
+    onError: () => toast.error('Gagal lepas link'),
+  });
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <LinkIcon className="h-3 w-3" />
+          Link / URL terkait ({linksQuery.data?.length ?? 0})
+        </div>
+        {!adding && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setAdding(true)}
+            className="h-7 px-2"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Tambah link
+          </Button>
+        )}
+      </div>
+
+      {adding && (
+        <div className="space-y-2 rounded-md border bg-muted/30 p-2">
+          <Input
+            autoFocus
+            type="url"
+            placeholder="https://..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (url.trim()) addMutation.mutate();
+              }
+            }}
+            className="h-8"
+          />
+          <Input
+            placeholder="Judul (opsional, auto-fetch jika kosong)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="h-8"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setAdding(false);
+                setUrl('');
+                setTitle('');
+              }}
+              className="h-7 px-2"
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => addMutation.mutate()}
+              disabled={!url.trim() || addMutation.isPending}
+              className="h-7 px-2"
+            >
+              {addMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Simpan
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {linksQuery.isLoading && <Skeleton className="h-10 w-full" />}
+
+      {!linksQuery.isLoading && linksQuery.data && linksQuery.data.length > 0 && (
+        <div className="space-y-1">
+          {linksQuery.data.map((l) => (
+            <div
+              key={l.id}
+              className="flex items-center gap-2 rounded-md border bg-card px-2 py-1.5 text-sm"
+            >
+              {l.faviconUrl ? (
+                <img src={l.faviconUrl} alt="" className="h-4 w-4 shrink-0 rounded" />
+              ) : (
+                <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+              <a
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 min-w-0 hover:underline"
+              >
+                <div className="font-medium truncate">{l.title}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{l.url}</div>
+              </a>
+              <Badge variant="outline" className="text-[10px] shrink-0">
+                {l.platform}
+              </Badge>
+              <a
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground shrink-0"
+                title="Buka di tab baru"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Lepas link "${l.title}" dari task ini?`)) {
+                    removeMutation.mutate(l.id);
+                  }
+                }}
+                className="text-muted-foreground hover:text-destructive shrink-0"
+                title="Lepas dari task"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
