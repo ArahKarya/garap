@@ -137,7 +137,9 @@ export async function loginWithGoogle(
   }
 
   // Upsert user. If the email already exists, link Google sub. If new, create
-  // and assign the SUPER_ADMIN role (single-user app).
+  // and assign a role. SaaS B2C: the very first user in the system is the
+  // platform owner → SUPER_ADMIN; every subsequent signup → MEMBER (full CRUD
+  // over their OWN data only, no admin access).
   const existing = await prisma.user.findUnique({ where: { email: profile.email } });
   let userId: string;
   if (existing) {
@@ -152,6 +154,7 @@ export async function loginWithGoogle(
     });
     userId = updated.id;
   } else {
+    const isFirstUser = (await prisma.user.count()) === 0;
     const created = await prisma.user.create({
       data: {
         email: profile.email,
@@ -162,10 +165,11 @@ export async function loginWithGoogle(
       },
     });
     userId = created.id;
-    const superAdmin = await prisma.role.findUnique({ where: { name: ROLES.SUPER_ADMIN } });
-    if (superAdmin) {
+    const roleName = isFirstUser ? ROLES.SUPER_ADMIN : ROLES.MEMBER;
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (role) {
       await prisma.userRole.create({
-        data: { userId: created.id, roleId: superAdmin.id },
+        data: { userId: created.id, roleId: role.id },
       });
     }
   }

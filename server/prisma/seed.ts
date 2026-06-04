@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { ROLES, PERMISSIONS } from '@garap/shared';
+import { ROLES, PERMISSIONS, MEMBER_PERMISSIONS } from '@garap/shared';
 
 const prisma = new PrismaClient();
 
@@ -45,11 +45,31 @@ async function seedRoles() {
     });
   }
 
+  // MEMBER — role default pelanggan SaaS B2C: CRUD penuh atas data sendiri,
+  // tanpa permission admin. Permission di-scope ownerId di service layer.
+  const member = await prisma.role.upsert({
+    where: { name: ROLES.MEMBER },
+    update: {},
+    create: {
+      name: ROLES.MEMBER,
+      description: 'Pelanggan: akses penuh atas datanya sendiri',
+      isSystem: true,
+    },
+  });
+  const memberPerms = allPermissions.filter((p) =>
+    (MEMBER_PERMISSIONS as string[]).includes(p.key),
+  );
+  await prisma.rolePermission.deleteMany({ where: { roleId: member.id } });
+  await prisma.rolePermission.createMany({
+    data: memberPerms.map((p) => ({ roleId: member.id, permissionId: p.id })),
+    skipDuplicates: true,
+  });
+
   return superAdmin;
 }
 
 async function seedAdminUser(superAdminRoleId: string) {
-  const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@panggonmikir.local';
+  const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@garap.local';
   const password = process.env.SEED_ADMIN_PASSWORD;
 
   if (!password) {

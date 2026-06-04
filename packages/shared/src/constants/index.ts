@@ -18,9 +18,17 @@ export const ROLES = {
   MANAGER: 'MANAGER',
   STAFF: 'STAFF',
   VIEWER: 'VIEWER',
+  /** Pelanggan SaaS biasa (B2C): CRUD penuh atas DATA SENDIRI, tanpa akses admin. */
+  MEMBER: 'MEMBER',
 } as const;
 
 export type RoleName = (typeof ROLES)[keyof typeof ROLES];
+
+/**
+ * Role default untuk setiap signup publik baru (B2C). User pertama di sistem
+ * (platform owner) tetap SUPER_ADMIN; selebihnya MEMBER.
+ */
+export const DEFAULT_SIGNUP_ROLE: RoleName = ROLES.MEMBER;
 
 export const PERMISSIONS = {
   USER_READ: 'user:read',
@@ -66,6 +74,43 @@ export const PERMISSIONS = {
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+/**
+ * Permission set untuk role MEMBER (pelanggan SaaS B2C): CRUD penuh atas data
+ * miliknya sendiri (di-scope `ownerId` di service layer), tanpa permission admin
+ * (user/role/audit/job/settings-write/backup-restore).
+ */
+export const MEMBER_PERMISSIONS: Permission[] = [
+  PERMISSIONS.WORKSPACE_READ,
+  PERMISSIONS.WORKSPACE_WRITE,
+  PERMISSIONS.WORKSPACE_DELETE,
+  PERMISSIONS.TASK_READ,
+  PERMISSIONS.TASK_WRITE,
+  PERMISSIONS.TASK_DELETE,
+  PERMISSIONS.PROJECT_READ,
+  PERMISSIONS.PROJECT_WRITE,
+  PERMISSIONS.PROJECT_DELETE,
+  PERMISSIONS.LINK_READ,
+  PERMISSIONS.LINK_WRITE,
+  PERMISSIONS.LINK_DELETE,
+  PERMISSIONS.NOTE_READ,
+  PERMISSIONS.NOTE_WRITE,
+  PERMISSIONS.NOTE_DELETE,
+  PERMISSIONS.DOCUMENT_READ,
+  PERMISSIONS.DOCUMENT_WRITE,
+  PERMISSIONS.DOCUMENT_DELETE,
+  PERMISSIONS.REFERENCE_READ,
+  PERMISSIONS.REFERENCE_WRITE,
+  PERMISSIONS.REFERENCE_DELETE,
+  PERMISSIONS.TAG_READ,
+  PERMISSIONS.TAG_WRITE,
+  PERMISSIONS.FILE_UPLOAD,
+  PERMISSIONS.FILE_DELETE,
+  PERMISSIONS.BACKUP_CREATE,
+  PERMISSIONS.REPORT_READ,
+  PERMISSIONS.REPORT_EXPORT,
+  PERMISSIONS.SETTINGS_READ,
+];
 
 export const JOB_QUEUES = {
   EMAIL: 'email',
