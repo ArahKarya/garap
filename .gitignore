@@ -54,3 +54,8 @@ uploads/
 dump.rdb
 *.backup
 *.sql.gz
+
+# Backup env / file sensitif
+.env.bak*
+*.bak.panggon
+*.dump
