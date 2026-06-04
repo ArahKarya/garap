@@ -8,13 +8,21 @@ import {
   PROJECT_STATUSES,
   type ProjectStatus,
 } from '@panggonmikir/shared';
-import { Plus, Loader2, Pencil, Trash2, ExternalLink } from 'lucide-react';
+import {
+  Plus,
+  Loader2,
+  Pencil,
+  Trash2,
+  FolderKanban,
+  CheckSquare,
+  Link as LinkIcon,
+  CalendarDays,
+} from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
@@ -85,7 +93,7 @@ export function ProjectsPage() {
       workspaceId: activeWorkspaceId ?? '',
       name: '',
       status: 'ACTIVE',
-      color: '#2563ab',
+      color: '#10b981',
     },
   });
 
@@ -124,7 +132,7 @@ export function ProjectsPage() {
       workspaceId: activeWorkspaceId ?? '',
       name: '',
       status: 'ACTIVE',
-      color: '#2563ab',
+      color: '#10b981',
     });
     setOpen(true);
   };
@@ -158,92 +166,106 @@ export function ProjectsPage() {
 
       <TagFilter selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-center">Tasks</TableHead>
-              <TableHead className="text-center">Links</TableHead>
-              <TableHead>Tenggat</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {projectsQuery.isLoading &&
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={6}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!projectsQuery.isLoading &&
-              (!projectsQuery.data || projectsQuery.data.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <EmptyState description="Belum ada project." />
-                  </TableCell>
-                </TableRow>
-              )}
-            {projectsQuery.data?.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    {p.color && (
-                      <span
-                        className="h-3 w-3 rounded-full shrink-0"
-                        style={{ backgroundColor: p.color }}
-                      />
-                    )}
-                    {p.name}
+      {projectsQuery.isLoading && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="mt-3 h-3 w-full" />
+              <Skeleton className="mt-4 h-3 w-1/2" />
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {!projectsQuery.isLoading &&
+        (!projectsQuery.data || projectsQuery.data.length === 0) && (
+          <Card className="p-0">
+            <EmptyState
+              icon={FolderKanban}
+              title="Belum ada project"
+              description="Buat project untuk mengelompokkan task, link, note, dan dokumen."
+              action={
+                <Button size="sm" onClick={openCreate}>
+                  <Plus className="h-4 w-4" />
+                  Project Baru
+                </Button>
+              }
+            />
+          </Card>
+        )}
+
+      {!projectsQuery.isLoading && projectsQuery.data && projectsQuery.data.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {projectsQuery.data.map((p) => (
+            <Card
+              key={p.id}
+              className="group relative overflow-hidden p-0 transition-colors hover:border-primary/40"
+            >
+              <span
+                className="absolute inset-x-0 top-0 h-1"
+                style={{ backgroundColor: p.color ?? 'var(--primary)' }}
+              />
+              <RouterLink to={`/projects/${p.id}`} className="block p-4 pt-5">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: p.color ?? 'var(--primary)' }}
+                  />
+                  <h3 className="truncate text-sm font-semibold">{p.name}</h3>
+                </div>
+                <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-xs text-muted-foreground">
+                  {p.description || 'Tidak ada deskripsi.'}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px]">
+                    {p.status}
+                  </Badge>
+                  <span className="flex items-center gap-1">
+                    <CheckSquare className="h-3 w-3" />
+                    {p._count?.tasks ?? 0}
                   </span>
-                  {p.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                      {p.description}
-                    </p>
+                  <span className="flex items-center gap-1">
+                    <LinkIcon className="h-3 w-3" />
+                    {p._count?.links ?? 0}
+                  </span>
+                  {p.dueDate && (
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" />
+                      {new Date(p.dueDate).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                      })}
+                    </span>
                   )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{p.status}</Badge>
-                </TableCell>
-                <TableCell className="text-center">{p._count?.tasks ?? 0}</TableCell>
-                <TableCell className="text-center">{p._count?.links ?? 0}</TableCell>
-                <TableCell>
-                  {p.dueDate ? (
-                    new Date(p.dueDate).toLocaleDateString('id-ID')
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    <Button variant="ghost" size="icon" asChild title="Buka detail">
-                      <RouterLink to={`/projects/${p.id}`}>
-                        <ExternalLink className="h-4 w-4" />
-                      </RouterLink>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm(`Pindah "${p.name}" ke trash?`))
-                          deleteMutation.mutate(p.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+                </div>
+              </RouterLink>
+              <div className="absolute right-2 top-2 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Edit"
+                  onClick={() => openEdit(p)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Hapus"
+                  onClick={() => {
+                    if (confirm(`Pindah "${p.name}" ke trash?`)) deleteMutation.mutate(p.id);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">

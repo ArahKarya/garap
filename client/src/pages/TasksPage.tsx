@@ -22,6 +22,8 @@ import {
   ChevronRight,
   Repeat,
   Search as SearchIcon,
+  CornerDownLeft,
+  CheckSquare,
 } from 'lucide-react';
 import {
   DndContext,
@@ -39,7 +41,6 @@ import { api } from '@/lib/api';
 import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
@@ -74,13 +75,6 @@ interface TaskRow {
   project: { id: string; name: string; color: string | null } | null;
   completedAt: string | null;
 }
-
-const priorityVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  LOW: 'outline',
-  MEDIUM: 'secondary',
-  HIGH: 'default',
-  URGENT: 'destructive',
-};
 
 const priorityColor: Record<string, string> = {
   LOW: 'border-l-muted-foreground/30',
@@ -171,6 +165,8 @@ export function TasksPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [quickAddTitle, setQuickAddTitle] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { activeWorkspaceId } = useActiveWorkspace();
 
   // Debounce search input by 250ms.
@@ -291,6 +287,29 @@ export function TasksPage() {
     onError: () => toast.error('Gagal mengubah status task'),
   });
 
+  // Inline quick-add: title only, sensible defaults, no dialog. Mirrors the
+  // Google Tasks / Todoist "type + Enter" pattern.
+  const quickAddMutation = useMutation({
+    mutationFn: async (title: string) => {
+      const res = await api.post('/tasks', {
+        workspaceId: activeWorkspaceId || '',
+        title,
+        status: 'TODO',
+        priority: 'MEDIUM',
+        projectId: null,
+        parentId: null,
+        recurrence: null,
+      });
+      return res.data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      setQuickAddTitle('');
+    },
+    onError: () => toast.error('Gagal menambah task'),
+  });
+
   const setStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: TaskStatus }) => {
       await api.patch(`/tasks/${id}`, { status });
@@ -370,6 +389,9 @@ export function TasksPage() {
       priority: 'MEDIUM',
       parentId: parentId ?? null,
     });
+    // Sub-task creation expands advanced (parent already set);
+    // plain create starts collapsed.
+    setShowAdvanced(!!parentId);
     setOpen(true);
   };
 
@@ -386,7 +408,22 @@ export function TasksPage() {
       parentId: t.parentId,
       recurrence: t.recurrence ?? null,
     });
+    // Expand advanced when editing if anything non-default is set, so user
+    // sees their existing values immediately.
+    const hasAdvanced =
+      t.status !== 'TODO' ||
+      t.priority !== 'MEDIUM' ||
+      !!t.parentId ||
+      !!t.recurrence;
+    setShowAdvanced(hasAdvanced);
     setOpen(true);
+  };
+
+  const handleQuickAdd = (e: React.FormEvent): void => {
+    e.preventDefault();
+    const title = quickAddTitle.trim();
+    if (!title || !activeWorkspaceId || quickAddMutation.isPending) return;
+    quickAddMutation.mutate(title);
   };
 
   // Build a parent-children tree for the list view + count subtasks for cards.
@@ -482,13 +519,41 @@ export function TasksPage() {
                 </SelectContent>
               </Select>
             )}
-            <Button size="sm" onClick={() => openCreate()}>
+            <Button
+              size="sm"
+              onClick={() => openCreate()}
+              title="Tambah task dengan detail lengkap (⌘⇧A untuk dialog cepat global)"
+            >
               <Plus className="h-4 w-4" />
-              Tambah Task
+              Detail Task
             </Button>
           </div>
         }
       />
+
+      <form onSubmit={handleQuickAdd}>
+        <div className="relative">
+          <Plus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={quickAddTitle}
+            onChange={(e) => setQuickAddTitle(e.target.value)}
+            placeholder="Tambah tugas… (Enter untuk simpan, ⌘⇧A untuk quick-add global)"
+            className="pl-9 pr-24 h-11 text-base"
+            disabled={!activeWorkspaceId || quickAddMutation.isPending}
+            aria-label="Tambah tugas cepat"
+          />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+            {quickAddMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : quickAddTitle.trim() ? (
+              <kbd className="inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <CornerDownLeft className="h-3 w-3" />
+                Enter
+              </kbd>
+            ) : null}
+          </div>
+        </div>
+      </form>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px]">
@@ -525,46 +590,26 @@ export function TasksPage() {
       )}
 
       {view === 'list' ? (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all"
-                    checked={
-                      (tasksQuery.data?.length ?? 0) > 0 &&
-                      tasksQuery.data!.every((t) => selectedIds.has(t.id))
-                    }
-                    onChange={() => selectAll((tasksQuery.data ?? []).map((t) => t.id))}
-                  />
-                </TableHead>
-                <TableHead className="w-10" />
-                <TableHead>Judul</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Prioritas</TableHead>
-                <TableHead>Tenggat</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasksQuery.isLoading &&
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={8}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              {!tasksQuery.isLoading && roots.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8}>
-                    <EmptyState description="Belum ada task. Klik “Tambah Task”." />
-                  </TableCell>
-                </TableRow>
-              )}
+        <Card className="overflow-hidden p-0">
+          {tasksQuery.isLoading && (
+            <div className="divide-y">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+              ))}
+            </div>
+          )}
+          {!tasksQuery.isLoading && roots.length === 0 && (
+            <EmptyState
+              icon={CheckSquare}
+              title="Belum ada task"
+              description="Ketik di kotak “Tambah tugas…” di atas, atau tekan ⌘⇧A untuk dialog cepat."
+            />
+          )}
+          {!tasksQuery.isLoading && roots.length > 0 && (
+            <div className="divide-y">
               {roots.map((t) => (
                 <TaskRowGroup
                   key={t.id}
@@ -582,8 +627,8 @@ export function TasksPage() {
                   onView={setViewingId}
                 />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          )}
         </Card>
       ) : (
         <KanbanBoard
@@ -640,36 +685,32 @@ export function TasksPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={watch('status')}
-                  onValueChange={(v) => setValue('status', v as CreateTaskInput['status'])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TASK_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {statusLabel[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="dueDate">Tenggat (opsional)</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={toDateInput(
+                    watch('dueDate') ? new Date(watch('dueDate') as Date).toISOString() : null,
+                  )}
+                  onChange={(e) =>
+                    setValue('dueDate', e.target.value ? new Date(e.target.value) : null)
+                  }
+                />
               </div>
               <div className="space-y-2">
-                <Label>Prioritas</Label>
+                <Label>Project (opsional)</Label>
                 <Select
-                  value={watch('priority')}
-                  onValueChange={(v) => setValue('priority', v as CreateTaskInput['priority'])}
+                  value={watch('projectId') ?? 'none'}
+                  onValueChange={(v) => setValue('projectId', v === 'none' ? null : v)}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Tanpa project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {TASK_PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
+                    <SelectItem value="none">— Tanpa project —</SelectItem>
+                    {projectsQuery.data?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -677,92 +718,120 @@ export function TasksPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Tenggat (opsional)</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={toDateInput(
-                  watch('dueDate') ? new Date(watch('dueDate') as Date).toISOString() : null,
-                )}
-                onChange={(e) =>
-                  setValue('dueDate', e.target.value ? new Date(e.target.value) : null)
-                }
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((s) => !s)}
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronRight
+                className={cn('h-3.5 w-3.5 transition-transform', showAdvanced && 'rotate-90')}
               />
-            </div>
+              Opsi lanjutan
+              {!showAdvanced && (
+                <span className="text-[10px] font-normal opacity-70">
+                  (status, prioritas, sub-task, pengulangan, tag)
+                </span>
+              )}
+            </button>
 
-            <div className="space-y-2">
-              <Label>Project (opsional)</Label>
-              <Select
-                value={watch('projectId') ?? 'none'}
-                onValueChange={(v) => setValue('projectId', v === 'none' ? null : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih project..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Tanpa project —</SelectItem>
-                  {projectsQuery.data?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {showAdvanced && (
+              <div className="space-y-4 pl-4 border-l-2 border-muted">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={watch('status')}
+                      onValueChange={(v) => setValue('status', v as CreateTaskInput['status'])}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TASK_STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {statusLabel[s]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Prioritas</Label>
+                    <Select
+                      value={watch('priority')}
+                      onValueChange={(v) =>
+                        setValue('priority', v as CreateTaskInput['priority'])
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TASK_PRIORITIES.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label>Parent task (opsional — bikin sub-task)</Label>
-              <Select
-                value={watch('parentId') ?? 'none'}
-                onValueChange={(v) => setValue('parentId', v === 'none' ? null : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih parent task..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Top-level (bukan sub-task) —</SelectItem>
-                  {(tasksQuery.data ?? [])
-                    .filter((t) => t.id !== editingId)
-                    .map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.title}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-2">
+                  <Label>Parent task (jadikan sub-task)</Label>
+                  <Select
+                    value={watch('parentId') ?? 'none'}
+                    onValueChange={(v) => setValue('parentId', v === 'none' ? null : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih parent task..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Top-level (bukan sub-task) —</SelectItem>
+                      {(tasksQuery.data ?? [])
+                        .filter((t) => t.id !== editingId)
+                        .map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Repeat className="h-3.5 w-3.5" />
-                Pengulangan (opsional)
-              </Label>
-              <Select
-                value={watch('recurrence') ?? 'none'}
-                onValueChange={(v) => setValue('recurrence', v === 'none' ? null : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Tidak berulang" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Tidak berulang —</SelectItem>
-                  {TASK_RECURRENCES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {RECURRENCE_LABELS[r]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Saat task ditandai selesai, instance baru otomatis dibuat dengan tenggat berikutnya. Butuh tenggat aktif.
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Repeat className="h-3.5 w-3.5" />
+                    Pengulangan
+                  </Label>
+                  <Select
+                    value={watch('recurrence') ?? 'none'}
+                    onValueChange={(v) => setValue('recurrence', v === 'none' ? null : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tidak berulang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Tidak berulang —</SelectItem>
+                      {TASK_RECURRENCES.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {RECURRENCE_LABELS[r]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Saat task ditandai selesai, instance baru otomatis dibuat dengan tenggat
+                    berikutnya. Butuh tenggat aktif.
+                  </p>
+                </div>
 
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <TagPicker entityType="TASK" entityId={editingId} />
-            </div>
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <TagPicker entityType="TASK" entityId={editingId} />
+                </div>
+              </div>
+            )}
 
             <DialogFooter className="sticky bottom-0 bg-background -mx-6 px-6 py-3 border-t -mb-6">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
@@ -824,110 +893,130 @@ function TaskRowGroup({
   onView,
 }: TaskRowGroupProps) {
   const children = childrenByParent.get(t.id) ?? [];
-  const indent = depth * 20;
+  const done = t.status === 'DONE' || t.status === 'CANCELLED';
+  const isSelected = selected.has(t.id);
   return (
     <>
-      <TableRow
-        className={cn(t.status === 'DONE' && 'opacity-60', selected.has(t.id) && 'bg-accent/40')}
+      <div
+        className={cn(
+          'group flex items-center gap-2.5 py-2.5 pr-3 transition-colors hover:bg-accent/40',
+          isSelected && 'bg-accent/60',
+        )}
+        style={{ paddingLeft: 16 + depth * 22 }}
       >
-        <TableCell>
-          <input
-            type="checkbox"
-            aria-label={`Select ${t.title}`}
-            checked={selected.has(t.id)}
-            onChange={() => onToggleSelect(t.id)}
-          />
-        </TableCell>
-        <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onComplete(t.id)}
-            title={t.status === 'DONE' ? 'Buka kembali' : 'Tandai selesai'}
-          >
-            <Check
-              className={t.status === 'DONE' ? 'text-success' : 'text-muted-foreground'}
-            />
-          </Button>
-        </TableCell>
-        <TableCell className="font-medium">
-          <div style={{ paddingLeft: indent }} className="flex items-center gap-2">
-            {depth > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+        {/* selection — subtle, muncul saat hover atau terpilih */}
+        <input
+          type="checkbox"
+          aria-label={`Pilih ${t.title}`}
+          checked={isSelected}
+          onChange={() => onToggleSelect(t.id)}
+          className={cn(
+            'h-3.5 w-3.5 shrink-0 cursor-pointer rounded transition-opacity',
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
+        />
+
+        {/* toggle selesai — lingkaran */}
+        <button
+          type="button"
+          onClick={() => onComplete(t.id)}
+          title={t.status === 'DONE' ? 'Buka kembali' : 'Tandai selesai'}
+          className={cn(
+            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+            t.status === 'DONE'
+              ? 'border-success bg-success text-success-foreground'
+              : 'border-muted-foreground/40 text-transparent hover:border-success hover:text-success/50',
+          )}
+        >
+          <Check className="h-3 w-3" strokeWidth={3} />
+        </button>
+
+        {/* judul + meta */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            {depth > 0 && <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />}
+            {(t.priority === 'HIGH' || t.priority === 'URGENT') && (
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 shrink-0 rounded-full',
+                  t.priority === 'URGENT' ? 'bg-destructive' : 'bg-warning',
+                )}
+                title={`Prioritas ${t.priority}`}
+              />
+            )}
             <button
               type="button"
               onClick={() => onView(t.id)}
               className={cn(
-                'text-left hover:underline cursor-pointer',
-                t.status === 'DONE' && 'text-muted-foreground',
+                'truncate text-left text-sm font-medium transition-colors hover:text-primary',
+                done && 'text-muted-foreground line-through',
               )}
             >
               {t.title}
             </button>
             {t.recurrence && (
-              <Badge
-                variant="outline"
-                className="text-[10px] gap-1 border-info/40 text-info"
-                title={`Berulang ${t.recurrence}`}
-              >
-                <Repeat className="h-3 w-3" />
-                {RECURRENCE_LABELS[t.recurrence as keyof typeof RECURRENCE_LABELS] ?? t.recurrence}
-              </Badge>
+              <Repeat
+                className="h-3 w-3 shrink-0 text-info"
+                aria-label={`Berulang ${t.recurrence}`}
+              />
             )}
             {children.length > 0 && (
-              <Badge variant="outline" className="text-[10px]">
+              <span className="shrink-0 text-[11px] text-muted-foreground">
                 {children.length} sub
-              </Badge>
+              </span>
             )}
           </div>
-        </TableCell>
-        <TableCell>
-          {t.project ? (
-            <span className="inline-flex items-center gap-2">
+          {t.project && (
+            <div className="mt-0.5 flex items-center gap-1.5">
               {t.project.color && (
                 <span
-                  className="h-2 w-2 rounded-full"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: t.project.color }}
                 />
               )}
-              {t.project.name}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
+              <span className="truncate text-xs text-muted-foreground">{t.project.name}</span>
+            </div>
           )}
-        </TableCell>
-        <TableCell>
-          <Badge variant="outline">{t.status}</Badge>
-        </TableCell>
-        <TableCell>
-          <Badge variant={priorityVariant[t.priority] ?? 'outline'}>{t.priority}</Badge>
-        </TableCell>
-        <TableCell>
-          <DueBadge iso={t.dueDate} status={t.status} />
-        </TableCell>
-        <TableCell className="text-right">
-          <div className="inline-flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Tambah sub-task"
-              onClick={() => onAddSubtask(t.id)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" title="Edit" onClick={() => onEdit(t)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Hapus"
-              onClick={() => onDelete(t.id, t.title)}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+        </div>
+
+        {/* tenggat */}
+        {t.dueDate && (
+          <div className="shrink-0 text-xs">
+            <DueBadge iso={t.dueDate} status={t.status} short />
           </div>
-        </TableCell>
-      </TableRow>
+        )}
+
+        {/* aksi — muncul saat hover (selalu tampil di mobile) */}
+        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Tambah sub-task"
+            onClick={() => onAddSubtask(t.id)}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Edit"
+            onClick={() => onEdit(t)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Hapus"
+            onClick={() => onDelete(t.id, t.title)}
+          >
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </div>
+      </div>
       {children.map((c) => (
         <TaskRowGroup
           key={c.id}

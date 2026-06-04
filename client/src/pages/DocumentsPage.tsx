@@ -24,18 +24,9 @@ import { api } from '@/lib/api';
 import { useActiveWorkspace } from '@/hooks/useWorkspaces';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -264,117 +255,116 @@ export function DocumentsPage() {
 
       <TagFilter selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10" />
-              <TableHead>Judul</TableHead>
-              <TableHead>Tipe</TableHead>
-              <TableHead>Ukuran</TableHead>
-              <TableHead>Project</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {documentsQuery.isLoading &&
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={6}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!documentsQuery.isLoading &&
-              (!documentsQuery.data || documentsQuery.data.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <EmptyState description="Belum ada document. Upload file atau simpan link." />
-                  </TableCell>
-                </TableRow>
-              )}
-            {documentsQuery.data?.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>
-                  {d.upload ? (
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Link2 className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </TableCell>
-                <TableCell className="font-medium">
-                  {d.title}
-                  {d.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                      {d.description}
-                    </p>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {d.upload ? 'UPLOAD' : 'EXTERNAL'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {d.upload ? (
-                    formatBytes(d.upload.size)
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {d.project?.name ?? <span className="text-muted-foreground">—</span>}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    {d.upload && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Download"
-                        onClick={() =>
-                          handleDownload(d.id, d.upload?.originalName ?? d.title)
-                        }
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {d.externalUrl && (
-                      <Button variant="ghost" size="icon" asChild title="Buka link">
-                        <a
-                          href={d.externalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Edit"
-                      onClick={() => openEdit(d)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm(`Pindahkan "${d.title}" ke trash?`))
-                          deleteMutation.mutate(d.id);
-                      }}
-                      title="Hapus"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+      <Card className="overflow-hidden p-0">
+        {documentsQuery.isLoading && (
+          <div className="divide-y">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="h-8 w-8 rounded-lg" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        )}
+        {!documentsQuery.isLoading &&
+          (!documentsQuery.data || documentsQuery.data.length === 0) && (
+            <EmptyState
+              icon={FileText}
+              title="Belum ada document"
+              description="Upload file lokal atau simpan link ke file di GDrive/lainnya."
+              action={
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Tambah Document
+                </Button>
+              }
+            />
+          )}
+        {!documentsQuery.isLoading && documentsQuery.data && documentsQuery.data.length > 0 && (
+          <div className="divide-y">
+            {documentsQuery.data.map((d) => (
+              <div
+                key={d.id}
+                className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/40"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  {d.upload ? (
+                    <FileText className="h-4 w-4" />
+                  ) : (
+                    <Link2 className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium">{d.title}</span>
+                    {d.upload && (
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                        {formatBytes(d.upload.size)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{d.upload ? 'File upload' : 'Link eksternal'}</span>
+                    {d.project && (
+                      <>
+                        <span>·</span>
+                        <span className="inline-flex items-center gap-1">
+                          {d.project.color && (
+                            <span
+                              className="h-2 w-2 rounded-full"
+                              style={{ backgroundColor: d.project.color }}
+                            />
+                          )}
+                          {d.project.name}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100">
+                  {d.upload && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Download"
+                      onClick={() => handleDownload(d.id, d.upload?.originalName ?? d.title)}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {d.externalUrl && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild title="Buka link">
+                      <a href={d.externalUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title="Edit"
+                    onClick={() => openEdit(d)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title="Hapus"
+                    onClick={() => {
+                      if (confirm(`Pindahkan "${d.title}" ke trash?`)) deleteMutation.mutate(d.id);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Create dialog (upload or external) */}

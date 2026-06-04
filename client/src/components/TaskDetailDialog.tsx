@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   CheckSquare,
-  Square,
   Pencil,
   Trash2,
   Calendar,
@@ -34,6 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { TagPicker } from '@/components/TagPicker';
+import { cn } from '@/lib/utils';
 
 type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE' | 'CANCELLED';
 
@@ -248,23 +248,23 @@ export function TaskDetailDialog({
                           type="button"
                           onClick={() => subtaskToggle.mutate(s.id)}
                           disabled={subtaskToggle.isPending}
-                          className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent transition-colors"
+                          className="group flex w-full items-center gap-2.5 rounded-md p-2 text-left text-sm transition-colors hover:bg-accent"
                         >
-                          {sDone ? (
-                            <CheckSquare className="h-4 w-4 text-primary shrink-0" />
-                          ) : (
-                            <Square className="h-4 w-4 text-muted-foreground shrink-0" />
-                          )}
                           <span
-                            className={
-                              sDone ? 'text-muted-foreground flex-1' : 'flex-1'
-                            }
+                            className={cn(
+                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+                              sDone
+                                ? 'border-success bg-success text-success-foreground'
+                                : 'border-muted-foreground/40 text-transparent group-hover:border-success group-hover:text-success/50',
+                            )}
+                          >
+                            <CheckSquare className="h-3 w-3" strokeWidth={3} />
+                          </span>
+                          <span
+                            className={cn('flex-1', sDone && 'text-muted-foreground line-through')}
                           >
                             {s.title}
                           </span>
-                          <Badge variant="outline" className="text-[10px]">
-                            {s.status}
-                          </Badge>
                         </button>
                       );
                     })}
