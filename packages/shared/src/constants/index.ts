@@ -6,10 +6,10 @@ export const BRANDING = {
   TAGLINE: 'Tempat berpikir, mengelola, dan menyimpan',
   LEGAL_NAME: 'PT Arah Karya Sinergi',
   COPYRIGHT: '© Panggon Mikir — Built on ArahKarya by PT Arah Karya Sinergi',
-  LOGO_LIGHT: '/icons/icon-arah-bk.png',
-  LOGO_DARK: '/icons/icon-arah-wh.png',
-  LOGO_192: '/icons/icon-192.png',
-  LOGO_512: '/icons/icon-512.png',
+  LOGO_LIGHT: '/icons/icon-arah-bk.png?v=2026051901',
+  LOGO_DARK: '/icons/icon-arah-wh.png?v=2026051901',
+  LOGO_192: '/icons/icon-192.png?v=2026051901',
+  LOGO_512: '/icons/icon-512.png?v=2026051901',
 } as const;
 
 export const ROLES = {
