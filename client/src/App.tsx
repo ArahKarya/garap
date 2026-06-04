@@ -31,6 +31,7 @@ const SearchPage = lazy(() => import('./pages/SearchPage').then((m) => ({ defaul
 const UsersPage = lazy(() => import('./pages/UsersPage').then((m) => ({ default: m.UsersPage })));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage').then((m) => ({ default: m.AuditLogPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
 
 // Public marketing + legal pages — reachable without auth, lazy-loaded.
 const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })));
@@ -228,6 +229,14 @@ export function App() {
           element={
             <Suspense fallback={<PageFallback />}>
               <SettingsPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="billing"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <BillingPage />
             </Suspense>
           }
         />

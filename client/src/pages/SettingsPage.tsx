@@ -13,6 +13,7 @@ import {
   FileText,
   ChevronRight,
   Calendar as CalendarIcon,
+  CreditCard,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -294,6 +295,21 @@ export function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* ── Langganan / billing ──────────────────────────────────────────── */}
+      <LinkSection
+        title="Langganan"
+        description="Paket aktif, pemakaian, dan opsi upgrade"
+        links={[
+          {
+            to: '/billing',
+            icon: CreditCard,
+            label: 'Paket & Pemakaian',
+            description: 'Lihat paket, kuota terpakai, dan upgrade',
+            permission: null,
+          },
+        ]}
+      />
 
       {/* ── Tampilan tambahan ────────────────────────────────────────────── */}
       <LinkSection
