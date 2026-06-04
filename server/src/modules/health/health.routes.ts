@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ok } from '@panggonmikir/shared';
+import { ok } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { redis } from '../../lib/redis.js';
 

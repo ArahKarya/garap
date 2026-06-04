@@ -50,12 +50,12 @@ importers:
       '@fontsource-variable/plus-jakarta-sans':
         specifier: ^5.1.0
         version: 5.2.8
+      '@garap/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.73.1(react@19.2.5))
-      '@panggonmikir/shared':
-        specifier: workspace:*
-        version: link:../packages/shared
       '@radix-ui/react-avatar':
         specifier: ^1.1.2
         version: 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -214,7 +214,7 @@ importers:
       '@bull-board/express':
         specifier: ^6.5.0
         version: 6.21.3
-      '@panggonmikir/shared':
+      '@garap/shared':
         specifier: workspace:*
         version: link:../packages/shared
       '@prisma/client':

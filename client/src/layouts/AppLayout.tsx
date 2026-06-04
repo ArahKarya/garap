@@ -21,7 +21,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { QuickAddTaskDialog, useQuickAddShortcut } from '@/components/QuickAddTaskDialog';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher';
 import { BrandLogo } from '@/components/BrandLogo';
-import { BRANDING } from '@panggonmikir/shared';
+import { BRANDING } from '@garap/shared';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';

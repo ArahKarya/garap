@@ -8,7 +8,7 @@ import {
   type CreateLinkInput,
   type UpdateLinkInput,
   type LinkListQuery,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { audit } from '../../middleware/audit.js';

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginInput, BRANDING } from '@panggonmikir/shared';
+import { loginSchema, type LoginInput, BRANDING } from '@garap/shared';
 import { toast } from 'sonner';
 import {
   Loader2,

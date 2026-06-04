@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
-import type { CreateUserInput, UpdateUserInput, PaginationQuery } from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+import type { CreateUserInput, UpdateUserInput, PaginationQuery } from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { ConflictError, NotFoundError } from '../../lib/errors.js';
 

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { changePasswordSchema, type ChangePasswordInput } from '@panggonmikir/shared';
+import { changePasswordSchema, type ChangePasswordInput } from '@garap/shared';
 import {
   Download,
   Loader2,

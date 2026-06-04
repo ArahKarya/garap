@@ -16,7 +16,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.js';
 import { createBullBoardRouter } from './services/bullBoard.js';
 import { authenticate } from './middleware/auth.js';
 import { requireRoles } from './middleware/rbac.js';
-import { ROLES } from '@panggonmikir/shared';
+import { ROLES } from '@garap/shared';
 
 export function createApp(): Express {
   const app = express();

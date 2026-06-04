@@ -1,4 +1,4 @@
-import { BRANDING } from '@panggonmikir/shared';
+import { BRANDING } from '@garap/shared';
 import { cn } from '@/lib/utils';
 
 interface BrandLogoProps {

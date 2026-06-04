@@ -10,7 +10,7 @@ import {
   TASK_RECURRENCES,
   RECURRENCE_LABELS,
   type TaskStatus,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Plus,
   Loader2,

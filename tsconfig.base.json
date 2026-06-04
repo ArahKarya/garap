@@ -17,8 +17,8 @@
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true
-    // No `paths` — `@panggonmikir/shared` resolves via package.json `exports`
-    // to `./packages/shared/dist`. Run `pnpm --filter @panggonmikir/shared build`
+    // No `paths` — `@garap/shared` resolves via package.json `exports`
+    // to `./packages/shared/dist`. Run `pnpm --filter @garap/shared build`
     // before any server build (Dockerfile + dev script already do this).
   }
 }

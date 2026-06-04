@@ -1,5 +1,5 @@
 {
-  "name": "@panggonmikir/server",
+  "name": "@garap/server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -25,7 +25,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@panggonmikir/shared": "workspace:*",
+    "@garap/shared": "workspace:*",
     "@bull-board/api": "^6.5.0",
     "@bull-board/express": "^6.5.0",
     "@prisma/client": "^5.22.0",

@@ -35,10 +35,10 @@ COPY --from=deps /app/client/node_modules ./client/node_modules
 COPY . .
 
 # Build order: shared → server (needs prisma generate) → client (consumes shared types).
-RUN pnpm --filter @panggonmikir/shared build
-RUN pnpm --filter @panggonmikir/server prisma:generate
-RUN pnpm --filter @panggonmikir/server build
-RUN pnpm --filter @panggonmikir/client build
+RUN pnpm --filter @garap/shared build
+RUN pnpm --filter @garap/server prisma:generate
+RUN pnpm --filter @garap/server build
+RUN pnpm --filter @garap/client build
 
 # ---- Stage 3: Runtime ----
 FROM node:20-alpine AS runtime

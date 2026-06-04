@@ -13,8 +13,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@panggonmikir/shared": ["../packages/shared/src/index.ts"],
-      "@panggonmikir/shared/*": ["../packages/shared/src/*"]
+      "@garap/shared": ["../packages/shared/src/index.ts"],
+      "@garap/shared/*": ["../packages/shared/src/*"]
     }
   },
   "include": ["src"]

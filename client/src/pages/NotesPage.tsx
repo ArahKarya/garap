@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createNoteSchema, type CreateNoteInput } from '@panggonmikir/shared';
+import { createNoteSchema, type CreateNoteInput } from '@garap/shared';
 import { Plus, Loader2, Pin, PinOff, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';

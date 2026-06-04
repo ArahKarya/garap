@@ -6,7 +6,7 @@ import {
   PERMISSIONS,
   resetPasswordSchema,
   updateUserSchema,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { authenticate } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { audit } from '../../middleware/audit.js';
@@ -23,7 +23,7 @@ usersRouter.get(
   validate(paginationQuerySchema, 'query'),
   async (req, res, next) => {
     try {
-      const q = getValidated<import('@panggonmikir/shared').PaginationQuery>(req, 'query');
+      const q = getValidated<import('@garap/shared').PaginationQuery>(req, 'query');
       const result = await svc.list(q);
       res.json(ok(result.items, result.meta));
     } catch (err) {
@@ -52,7 +52,7 @@ usersRouter.post(
   audit('CREATE', 'user'),
   async (req, res, next) => {
     try {
-      const input = getValidated<import('@panggonmikir/shared').CreateUserInput>(req);
+      const input = getValidated<import('@garap/shared').CreateUserInput>(req);
       const user = await svc.create(input);
       res.status(201).json(ok(user));
     } catch (err) {
@@ -68,7 +68,7 @@ usersRouter.patch(
   audit('UPDATE', 'user'),
   async (req, res, next) => {
     try {
-      const input = getValidated<import('@panggonmikir/shared').UpdateUserInput>(req);
+      const input = getValidated<import('@garap/shared').UpdateUserInput>(req);
       const user = await svc.update(req.params.id as string, input);
       res.json(ok(user));
     } catch (err) {

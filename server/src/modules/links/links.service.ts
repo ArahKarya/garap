@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
-import type { CreateLinkInput, UpdateLinkInput, LinkListQuery } from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+import type { CreateLinkInput, UpdateLinkInput, LinkListQuery } from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
 import { fetchMetadata, detectPlatform } from './links.metadata.js';

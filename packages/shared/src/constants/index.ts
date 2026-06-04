@@ -1,11 +1,11 @@
-export const APP_NAME = 'Panggon Mikir';
+export const APP_NAME = 'Garap';
 export const APP_VERSION = '0.1.0';
 
 export const BRANDING = {
-  APP_NAME: 'Panggon Mikir',
-  TAGLINE: 'Tempat berpikir, mengelola, dan menyimpan',
+  APP_NAME: 'Garap',
+  TAGLINE: 'Tempat menggarap task, project, dan file kerja',
   LEGAL_NAME: 'PT Arah Karya Sinergi',
-  COPYRIGHT: '© Panggon Mikir — Built on ArahKarya by PT Arah Karya Sinergi',
+  COPYRIGHT: '© Garap — Built on ArahKarya by PT Arah Karya Sinergi',
   LOGO_LIGHT: '/icons/icon-arah-bk.png?v=2026051901',
   LOGO_DARK: '/icons/icon-arah-wh.png?v=2026051901',
   LOGO_192: '/icons/icon-192.png?v=2026051901',

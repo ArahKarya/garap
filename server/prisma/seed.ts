@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { ROLES, PERMISSIONS } from '@panggonmikir/shared';
+import { ROLES, PERMISSIONS } from '@garap/shared';
 
 const prisma = new PrismaClient();
 

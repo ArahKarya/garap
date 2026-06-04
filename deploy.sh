@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Panggon Mikir — Production deploy on RPi5
+# Garap — Production deploy on RPi5
 #
 # Usage:
 #   ./deploy.sh                # full rebuild + restart
@@ -12,7 +12,7 @@
 #   - Docker + Docker Compose installed
 #   - .env populated (cp .env.docker.example .env, isi semua)
 #   - Cloudflare Tunnel (cloudflared) running with hostname
-#     panggonmikir.arahkarya.com → http://127.0.0.1:3007 ingress rule.
+#     garap.arahkarya.com → http://127.0.0.1:3007 ingress rule.
 #     Lihat docs/DEPLOY.md untuk setup-nya.
 # ============================================================================
 set -euo pipefail
@@ -61,16 +61,16 @@ case "${1:-all}" in
     docker compose up -d --build
     echo ""
     echo "→ Waiting for postgres healthy..."
-    until docker compose exec -T postgres pg_isready -U "${POSTGRES_USER:-panggonmikir}" >/dev/null 2>&1; do
+    until docker compose exec -T postgres pg_isready -U "${POSTGRES_USER:-garap}" >/dev/null 2>&1; do
       sleep 2
     done
     echo "→ Run migrations..."
-    docker compose exec -T app pnpm --filter @panggonmikir/server db:migrate || true
+    docker compose exec -T app pnpm --filter @garap/server db:migrate || true
     echo "→ Seed (idempotent)..."
-    docker compose exec -T app pnpm --filter @panggonmikir/server db:seed || true
+    docker compose exec -T app pnpm --filter @garap/server db:seed || true
     echo ""
     echo "✓ Selesai. App: http://localhost:${APP_PORT:-3007}"
-    echo "  Public: ${APP_URL:-https://panggonmikir.arahkarya.com}"
+    echo "  Public: ${APP_URL:-https://garap.arahkarya.com}"
     ;;
   *)
     echo "Usage: $0 [all|app|logs|down]"

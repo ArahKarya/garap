@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ok, PERMISSIONS } from '@panggonmikir/shared';
+import { ok, PERMISSIONS } from '@garap/shared';
 import { authenticate } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { prisma } from '../../lib/prisma.js';

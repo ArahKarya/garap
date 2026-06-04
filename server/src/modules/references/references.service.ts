@@ -3,8 +3,8 @@ import type {
   CreateReferenceInput,
   UpdateReferenceInput,
   ReferenceListQuery,
-} from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+} from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
 

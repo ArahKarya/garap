@@ -9,7 +9,7 @@ import {
   REFERENCE_TYPES,
   REFERENCE_TYPE_LABELS,
   type ReferenceType,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Plus,
   Loader2,

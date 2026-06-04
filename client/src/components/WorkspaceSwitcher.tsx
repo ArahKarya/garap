@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createWorkspaceSchema,
   type CreateWorkspaceInput,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Briefcase,
   Check,

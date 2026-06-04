@@ -3,7 +3,7 @@ import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
   WorkspaceListQuery,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ConflictError, ValidationError } from '../../lib/errors.js';
 

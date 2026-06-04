@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { fail } from '@panggonmikir/shared';
+import { fail } from '@garap/shared';
 import { AppError } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
 import { isProduction } from '../config/env.js';

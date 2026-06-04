@@ -1,4 +1,4 @@
-import { JOB_QUEUES, type JobQueueName } from '@panggonmikir/shared';
+import { JOB_QUEUES, type JobQueueName } from '@garap/shared';
 import { getQueue } from '../services/queue.js';
 import { logger } from '../lib/logger.js';
 

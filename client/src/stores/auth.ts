@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AuthTokens, AuthUser } from '@panggonmikir/shared';
+import type { AuthTokens, AuthUser } from '@garap/shared';
 
 interface AuthState {
   user: AuthUser | null;

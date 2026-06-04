@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { signAccessToken } from '../lib/jwt.js';
-import { ROLES } from '@panggonmikir/shared';
+import { ROLES } from '@garap/shared';
 
 let testCounter = 0;
 

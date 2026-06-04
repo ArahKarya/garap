@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ok, PERMISSIONS } from '@panggonmikir/shared';
+import { ok, PERMISSIONS } from '@garap/shared';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { audit } from '../../middleware/audit.js';

@@ -1,5 +1,5 @@
 import type { Request, RequestHandler } from 'express';
-import type { AuthUser } from '@panggonmikir/shared';
+import type { AuthUser } from '@garap/shared';
 import { UnauthorizedError } from '../lib/errors.js';
 import { verifyAccessToken } from '../lib/jwt.js';
 import { prisma } from '../lib/prisma.js';

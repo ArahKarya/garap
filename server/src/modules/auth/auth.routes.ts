@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { ok } from '@panggonmikir/shared';
+import { ok } from '@garap/shared';
 import {
   changePasswordSchema,
   googleLoginSchema,
   loginSchema,
   refreshTokenSchema,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { validate, getValidated } from '../../middleware/validate.js';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { env } from '../../config/env.js';
@@ -49,7 +49,7 @@ authRouter.get('/google', (_req, res) => {
 
 authRouter.post('/google', credentialLimiter, validate(googleLoginSchema), async (req, res, next) => {
   try {
-    const input = getValidated<import('@panggonmikir/shared').GoogleLoginInput>(req);
+    const input = getValidated<import('@garap/shared').GoogleLoginInput>(req);
     const result = await googleService.loginWithGoogle(
       input,
       req.ip ?? null,
@@ -112,7 +112,7 @@ authRouter.get('/google/callback', async (req, res, next) => {
 
 authRouter.post('/login', credentialLimiter, validate(loginSchema), async (req, res, next) => {
   try {
-    const input = getValidated<import('@panggonmikir/shared').LoginInput>(req);
+    const input = getValidated<import('@garap/shared').LoginInput>(req);
     const result = await authService.login(
       input,
       req.ip ?? null,
@@ -159,7 +159,7 @@ authRouter.post(
   validate(changePasswordSchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      const input = getValidated<import('@panggonmikir/shared').ChangePasswordInput>(req);
+      const input = getValidated<import('@garap/shared').ChangePasswordInput>(req);
       await authService.changePassword(req.user!.id, input.currentPassword, input.newPassword);
       res.json(ok({ changed: true }));
     } catch (err) {

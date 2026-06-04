@@ -1,5 +1,5 @@
-import type { PaginationQuery } from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+import type { PaginationQuery } from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from './prisma.js';
 import { NotFoundError } from './errors.js';
 

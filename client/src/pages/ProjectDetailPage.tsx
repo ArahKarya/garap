@@ -10,7 +10,7 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
-import type { ProjectStatus, TaskStatus } from '@panggonmikir/shared';
+import type { ProjectStatus, TaskStatus } from '@garap/shared';
 import { api } from '@/lib/api';
 import {
   AddTaskDialog,

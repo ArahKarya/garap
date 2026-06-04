@@ -1,17 +1,19 @@
+name: garap
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-panggonmikir}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-panggonmikir}
-      POSTGRES_DB: ${POSTGRES_DB:-panggonmikir_db}
+      POSTGRES_USER: ${POSTGRES_USER:-garap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-garap}
+      POSTGRES_DB: ${POSTGRES_DB:-garap_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - '${POSTGRES_PORT:-5439}:5432'
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-panggonmikir}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-garap}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,7 +39,7 @@ services:
       args:
         # Vite baked at build time. Reuse server-side GOOGLE_CLIENT_ID — same value.
         VITE_API_URL: /api
-        VITE_APP_NAME: "Panggon Mikir"
+        VITE_APP_NAME: "Garap"
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     depends_on:
@@ -47,19 +49,19 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-panggonmikir}:${POSTGRES_PASSWORD:-panggonmikir}@postgres:5432/${POSTGRES_DB:-panggonmikir_db}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-garap}:${POSTGRES_PASSWORD:-garap}@postgres:5432/${POSTGRES_DB:-garap_db}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
       PORT: 3007
-      APP_URL: ${APP_URL:-https://panggonmikir.arahkarya.com}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://panggonmikir.arahkarya.com}
+      APP_URL: ${APP_URL:-https://garap.arahkarya.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://garap.arahkarya.com}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://panggonmikir.arahkarya.com/api/auth/google/callback}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://garap.arahkarya.com/api/auth/google/callback}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS}
-      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@panggonmikir.local}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@garap.local}
       # Leave blank to skip local-admin seed; set to ≥12 chars to enable.
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
     ports:
@@ -79,18 +81,23 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-panggonmikir}:${POSTGRES_PASSWORD:-panggonmikir}@postgres:5432/${POSTGRES_DB:-panggonmikir_db}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-garap}:${POSTGRES_PASSWORD:-garap}@postgres:5432/${POSTGRES_DB:-garap_db}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://panggonmikir.arahkarya.com/api/auth/google/callback}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://garap.arahkarya.com/api/auth/google/callback}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS}
     command: ['node', 'server/dist/worker.js']
 
+# Volume fisik dipertahankan dari project lama (panggon-mikir_*) demi
+# kontinuitas data saat rename project → garap.
 volumes:
   postgres_data:
+    name: panggon-mikir_postgres_data
   redis_data:
+    name: panggon-mikir_redis_data
   app_uploads:
+    name: panggon-mikir_app_uploads

@@ -8,7 +8,7 @@ import {
   type CreateReferenceInput,
   type UpdateReferenceInput,
   type ReferenceListQuery,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { audit } from '../../middleware/audit.js';

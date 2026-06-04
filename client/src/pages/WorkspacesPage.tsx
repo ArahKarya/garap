@@ -6,7 +6,7 @@ import {
   createWorkspaceSchema,
   updateWorkspaceSchema,
   type CreateWorkspaceInput,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Plus,
   Pencil,

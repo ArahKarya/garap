@@ -7,7 +7,7 @@ import {
   updateDocumentSchema,
   type CreateExternalDocumentInput,
   type UpdateDocumentInput,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Plus,
   Loader2,

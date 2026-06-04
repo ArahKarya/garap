@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
-import type { CreateTaskInput, UpdateTaskInput, TaskListQuery } from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+import type { CreateTaskInput, UpdateTaskInput, TaskListQuery } from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
 

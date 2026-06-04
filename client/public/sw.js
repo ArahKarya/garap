@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panggonmikir-shell-v27';
+const CACHE_NAME = 'garap-shell-v28';
 
 const SHELL_ASSETS = [
   '/',

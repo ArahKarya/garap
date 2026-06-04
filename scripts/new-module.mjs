@@ -61,7 +61,7 @@ export type Update${Name}Input = z.infer<typeof update${Name}Schema>;
 // ─── Client page (same for both tiers) ───
 
 const pageTsx = `import { useQuery } from '@tanstack/react-query';
-import { BRANDING } from '@panggonmikir/shared';
+import { BRANDING } from '@garap/shared';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
@@ -133,8 +133,8 @@ export function ${Name}Page() {
 
 // ─── Simple tier: service directly uses Prisma ───
 
-const simpleService = `import type { PaginationQuery, Create${Name}Input, Update${Name}Input } from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+const simpleService = `import type { PaginationQuery, Create${Name}Input, Update${Name}Input } from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
 
@@ -202,7 +202,7 @@ export const ${name}Repository = new ${Name}RepositoryImpl();
 
 // ─── Layered tier: service uses repository ───
 
-const layeredService = `import type { PaginationQuery, Create${Name}Input, Update${Name}Input } from '@panggonmikir/shared';
+const layeredService = `import type { PaginationQuery, Create${Name}Input, Update${Name}Input } from '@garap/shared';
 import { ${name}Repository } from './${name}.repository.js';
 
 export async function list(q: PaginationQuery) {
@@ -230,12 +230,12 @@ export async function remove(id: string) {
 // ─── Routes (same structure for both tiers, service API is identical) ───
 
 const routesFile = `import { Router } from 'express';
-import { ok, paginationQuerySchema } from '@panggonmikir/shared';
+import { ok, paginationQuerySchema } from '@garap/shared';
 import { authenticate } from '../../middleware/auth.js';
 import { audit } from '../../middleware/audit.js';
 import { validate, getValidated } from '../../middleware/validate.js';
-import { create${Name}Schema, update${Name}Schema } from '@panggonmikir/shared/schemas/${name}';
-import type { Create${Name}Input, Update${Name}Input, PaginationQuery } from '@panggonmikir/shared';
+import { create${Name}Schema, update${Name}Schema } from '@garap/shared/schemas/${name}';
+import type { Create${Name}Input, Update${Name}Input, PaginationQuery } from '@garap/shared';
 import * as svc from './${name}.service.js';
 
 export const ${name}Router = Router();
@@ -373,7 +373,7 @@ ${layeredFiles}
      }
 
   2. Run migration:
-     pnpm --filter @panggonmikir/server db:migrate:dev --name add-${name}
+     pnpm --filter @garap/server db:migrate:dev --name add-${name}
 
   3. Register router in server/src/routes/index.ts:
      import { ${name}Router } from '../modules/${name}/${name}.routes.js';

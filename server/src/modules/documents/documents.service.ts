@@ -5,8 +5,8 @@ import type {
   CreateExternalDocumentInput,
   UpdateDocumentInput,
   DocumentListQuery,
-} from '@panggonmikir/shared';
-import { buildPagination, toSkipTake } from '@panggonmikir/shared';
+} from '@garap/shared';
+import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';

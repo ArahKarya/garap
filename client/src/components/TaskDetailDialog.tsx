@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { RECURRENCE_LABELS } from '@panggonmikir/shared';
+import { RECURRENCE_LABELS } from '@garap/shared';
 import { api } from '@/lib/api';
 import {
   Dialog,

@@ -1,7 +1,7 @@
 {
-  "name": "Panggon Mikir",
-  "short_name": "Panggon Mikir",
-  "description": "Tempat berpikir, mengelola, dan menyimpan",
+  "name": "Garap",
+  "short_name": "Garap",
+  "description": "Tempat menggarap task, project, dan file kerja",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

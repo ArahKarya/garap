@@ -3,7 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createTagSchema, type CreateTagInput } from '@panggonmikir/shared';
+import { createTagSchema, type CreateTagInput } from '@garap/shared';
 import { Plus, Loader2, Pencil, Trash2, Tag as TagIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';

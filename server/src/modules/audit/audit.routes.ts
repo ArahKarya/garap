@@ -5,7 +5,7 @@ import {
   ok,
   PERMISSIONS,
   toSkipTake,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { authenticate } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { validate, getValidated } from '../../middleware/validate.js';
@@ -21,7 +21,7 @@ auditRouter.get(
   validate(auditLogQuerySchema, 'query'),
   async (req, res, next) => {
     try {
-      const q = getValidated<import('@panggonmikir/shared').AuditLogQuery>(req, 'query');
+      const q = getValidated<import('@garap/shared').AuditLogQuery>(req, 'query');
       const { skip, take } = toSkipTake(q.page, q.limit);
       const where: any = {};
       if (q.userId) where.userId = q.userId;

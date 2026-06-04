@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
-import { ROLES } from '@panggonmikir/shared';
+import { ROLES } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { env, allowedEmails } from '../../config/env.js';
 import { ForbiddenError, UnauthorizedError } from '../../lib/errors.js';
@@ -10,7 +10,7 @@ import {
   signRefreshToken,
 } from '../../lib/jwt.js';
 import { recordAudit } from '../../middleware/audit.js';
-import type { AuthTokens, AuthUser } from '@panggonmikir/shared';
+import type { AuthTokens, AuthUser } from '@garap/shared';
 
 const client = new OAuth2Client({
   clientId: env.GOOGLE_CLIENT_ID,

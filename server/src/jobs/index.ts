@@ -1,4 +1,4 @@
-import { JOB_QUEUES } from '@panggonmikir/shared';
+import { JOB_QUEUES } from '@garap/shared';
 import { createWorker } from '../services/queue.js';
 import { logger } from '../lib/logger.js';
 import { emailProcessor } from './handlers/email.js';

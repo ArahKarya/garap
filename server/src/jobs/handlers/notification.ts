@@ -1,5 +1,5 @@
 import type { Processor } from 'bullmq';
-import type { NotificationPayload } from '@panggonmikir/shared';
+import type { NotificationPayload } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
 

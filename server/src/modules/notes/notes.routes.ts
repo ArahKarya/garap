@@ -8,7 +8,7 @@ import {
   type CreateNoteInput,
   type UpdateNoteInput,
   type NoteListQuery,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { requirePermissions } from '../../middleware/rbac.js';
 import { audit } from '../../middleware/audit.js';

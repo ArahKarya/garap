@@ -6,7 +6,7 @@ import {
   createTaskSchema,
   type CreateTaskInput,
   TASK_PRIORITIES,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import { Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ok } from '@panggonmikir/shared';
+import { ok } from '@garap/shared';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import * as svc from './dashboard.service.js';
 

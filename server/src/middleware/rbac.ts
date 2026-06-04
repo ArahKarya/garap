@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
-import type { Permission, RoleName } from '@panggonmikir/shared';
-import { ROLES } from '@panggonmikir/shared';
+import type { Permission, RoleName } from '@garap/shared';
+import { ROLES } from '@garap/shared';
 import { ForbiddenError, UnauthorizedError } from '../lib/errors.js';
 import type { AuthenticatedRequest } from './auth.js';
 

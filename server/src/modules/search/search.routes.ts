@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { ok } from '@panggonmikir/shared';
+import { ok } from '@garap/shared';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { validate, getValidated } from '../../middleware/validate.js';
 import * as svc from './search.service.js';

@@ -1,5 +1,5 @@
 import type { Prisma, TaggableEntity } from '@prisma/client';
-import type { CreateTagInput, UpdateTagInput, TagListQuery } from '@panggonmikir/shared';
+import type { CreateTagInput, UpdateTagInput, TagListQuery } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { ConflictError, NotFoundError } from '../../lib/errors.js';
 

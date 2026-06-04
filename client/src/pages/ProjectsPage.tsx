@@ -7,7 +7,7 @@ import {
   type CreateProjectInput,
   PROJECT_STATUSES,
   type ProjectStatus,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Plus,
   Loader2,

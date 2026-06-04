@@ -9,7 +9,7 @@ import {
   type UpdateLinkInput,
   LINK_PLATFORMS,
   type LinkPlatform,
-} from '@panggonmikir/shared';
+} from '@garap/shared';
 import {
   Plus,
   Loader2,

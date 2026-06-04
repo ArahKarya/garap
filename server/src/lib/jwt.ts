@@ -1,5 +1,5 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
-import type { JwtPayload } from '@panggonmikir/shared';
+import type { JwtPayload } from '@garap/shared';
 import { env } from '../config/env.js';
 
 export const signAccessToken = (payload: Omit<JwtPayload, 'iat' | 'exp'>) =>

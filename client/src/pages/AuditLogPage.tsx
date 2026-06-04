@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
-import { formatDateTimeID } from '@panggonmikir/shared';
+import { formatDateTimeID } from '@garap/shared';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
