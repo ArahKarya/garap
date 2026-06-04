@@ -1,14 +1,20 @@
-# CLAUDE.md — Panggon Mikir
+# CLAUDE.md — Garap
 
 Guidance untuk AI assistant (Claude Code) saat bekerja di codebase ini.
 
-## Apa itu Panggon Mikir
+> **Renamed 2026-06-04:** sebelumnya **Panggon Mikir** (folder `Panggon-Mikir`, domain
+> `panggonmikir.arahkarya.com`, package `@panggonmikir/*`, DB `panggonmikir_db`). Sekarang
+> **Garap** — folder `/home/yay/ArahKarya/Garap`, repo `ArahKarya/garap`, domain
+> `garap.arahkarya.com`, package `@garap/*`, DB `garap_db`/role `garap`. Volume Docker tetap
+> bernama `panggon-mikir_*` (dipertahankan via `name:` di compose demi data continuity).
 
-**Panggon Mikir** (Jawa: "tempat berpikir") — aplikasi *second brain* personal untuk
+## Apa itu Garap
+
+**Garap** (Jawa: "menggarap/mengerjakan") — aplikasi *second brain* personal untuk
 mengelola **task, project, dokumen, link, dan note**. Solo-user, dipakai oleh
 **Yayang Setya Nugroho** (`yayang.nugroho.s@gmail.com`).
 
-- **Domain**: `panggonmikir.arahkarya.com` (live via Cloudflare Tunnel)
+- **Domain**: `garap.arahkarya.com` (live via Cloudflare Tunnel)
 - **Deploy**: RPi5 via Docker Compose, exposed via `cloudflared` tunnel
   (NOT nginx + DNS proxy — nginx exists di RPi5 tapi cuma untuk LAN/localhost).
   Lihat `docs/DEPLOY.md` untuk arsitektur deploy lengkap.
@@ -77,7 +83,7 @@ Login JWT lokal (email/password) tetap tersedia sebagai fallback dev/break-glass
 
 ## Permissions Tambahan
 
-Di luar 16 permission bawaan ArahKarya, Panggon Mikir tambah 23 permission domain
+Di luar 16 permission bawaan ArahKarya, Garap tambah 23 permission domain
 (`workspace:*`, `task:*`, `project:*`, `link:*`, `tag:*`, `note:*`,
 `document:*`, `reference:*`). Lihat `packages/shared/src/constants/index.ts`.
 
@@ -96,7 +102,7 @@ permission check, jadi seluruh permission existing untuk persiapan masa depan
 1. **Zod schema share**: schema validasi selalu di `packages/shared/src/schemas/`
    — dipakai server (request body) DAN client (form). Jangan duplikat.
 2. **API envelope konsisten**: semua response via `ok()` / `fail()` dari
-   `@panggonmikir/shared` → `{ success, data, error, meta? }`.
+   `@garap/shared` → `{ success, data, error, meta? }`.
 3. **Immutable data**: jangan mutate, return object baru.
 4. **Small files**: target <400 LOC per file, max 800.
 5. **Audit everything**: mutation endpoint (POST/PATCH/DELETE) WAJIB pakai
@@ -117,11 +123,11 @@ pnpm new:module projects --layered  # Layered — repository + service split
 
 Lalu manual:
 1. Pastikan model sudah di `server/prisma/schema.prisma`
-2. `pnpm --filter @panggonmikir/server db:migrate:dev --name add-<name>`
+2. `pnpm --filter @garap/server db:migrate:dev --name add-<name>`
 3. Register router di `server/src/routes/index.ts`
 4. Add route di `client/src/App.tsx` + nav di sidebar
 
-## Module Tier Decision (untuk Panggon Mikir)
+## Module Tier Decision (untuk Garap)
 
 Saat ini semua module pakai tier **Simple** (`routes.ts + service.ts`, service
 akses Prisma langsung). Upgrade ke Layered hanya saat business logic
@@ -140,7 +146,7 @@ benar-benar berat dan butuh repository abstraction.
 
 ## Testing
 
-- Server: Vitest + supertest (`pnpm --filter @panggonmikir/server test`)
+- Server: Vitest + supertest (`pnpm --filter @garap/server test`)
 - Pakai PostgreSQL container (5439) di test, **jangan mock DB**
 - Target coverage 80%+ untuk business logic (task recurrence, link metadata
   parsing, tag uniqueness)
@@ -150,12 +156,16 @@ benar-benar berat dan butuh repository abstraction.
 
 Aplikasi ini WAJIB menampilkan branding ArahKarya (sesuai aturan parent framework):
 
-- `BRANDING.APP_NAME` = "Panggon Mikir" (tampil di sidebar header, login, PWA)
-- `BRANDING.COPYRIGHT` = "© Panggon Mikir — Built on ArahKarya by PT Arah Karya Sinergi"
+- `BRANDING.APP_NAME` = "Garap" (tampil di sidebar header, login, PWA)
+- `BRANDING.COPYRIGHT` = "© Garap — Built on ArahKarya by PT Arah Karya Sinergi"
 - Footer sidebar: copyright lengkap
 
-Logo & favicon: ganti file di `client/public/icons/` saat asset Panggon Mikir
-sudah disiapkan (sementara pakai placeholder ArahKarya).
+Logo & favicon: sudah pakai aset **Garap** sendiri (huruf "G" + centang mint di atas
+rounded-square emerald `#10b981`, gaya mirip app Tilik). Master SVG di
+`client/public/icons/icon.svg` + `icon-maskable.svg`; PNG (192/512/maskable/arah-bk/arah-wh)
++ `favicon.ico` di-generate dari situ via `rsvg-convert`/`magick`. Tema app juga emerald
+(lihat `client/src/styles/index.css`). Saat ganti aset: regenerate semua PNG, bump
+`?v=` di `index.html`/`BRANDING.LOGO_*` dan `CACHE_NAME` di `client/public/sw.js`.
 
 ## Jangan Lakukan
 
