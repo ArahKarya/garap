@@ -6,10 +6,10 @@ export const BRANDING = {
   TAGLINE: 'Tempat menggarap task, project, dan file kerja',
   LEGAL_NAME: 'PT Arah Karya Sinergi',
   COPYRIGHT: '© Garap — Built on ArahKarya by PT Arah Karya Sinergi',
-  LOGO_LIGHT: '/icons/icon-arah-bk.png?v=2026060401',
-  LOGO_DARK: '/icons/icon-arah-wh.png?v=2026060401',
-  LOGO_192: '/icons/icon-192.png?v=2026060401',
-  LOGO_512: '/icons/icon-512.png?v=2026060401',
+  LOGO_LIGHT: '/icons/icon-arah-bk.png?v=2026060402',
+  LOGO_DARK: '/icons/icon-arah-wh.png?v=2026060402',
+  LOGO_192: '/icons/icon-192.png?v=2026060402',
+  LOGO_512: '/icons/icon-512.png?v=2026060402',
 } as const;
 
 export const ROLES = {

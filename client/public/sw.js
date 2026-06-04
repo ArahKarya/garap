@@ -1,4 +1,4 @@
-const CACHE_NAME = 'garap-shell-v29';
+const CACHE_NAME = 'garap-shell-v30';
 
 const SHELL_ASSETS = [
   '/',
