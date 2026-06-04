@@ -3,6 +3,7 @@ import type { CreateTaskInput, UpdateTaskInput, TaskListQuery } from '@garap/sha
 import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { assertWithinQuota } from '../../lib/quota.js';
 
 interface OwnerScope {
   ownerId: string;
@@ -81,6 +82,7 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateTaskInput, scope: OwnerScope) {
+  await assertWithinQuota('tasks', scope.ownerId);
   const workspace = await prisma.workspace.findFirst({
     where: { id: input.workspaceId, ownerId: scope.ownerId, deletedAt: null },
     select: { id: true },

@@ -125,6 +125,27 @@ export const JOB_QUEUES = {
 
 export type JobQueueName = (typeof JOB_QUEUES)[keyof typeof JOB_QUEUES];
 
+/**
+ * Batas paket per-user (anti-abuse untuk signup publik). Saat ini hanya tier FREE
+ * (semua user). Nanti saat billing aktif, map ke plan berbayar (limit lebih tinggi).
+ * `null` = tak terbatas. Storage dalam MB.
+ */
+export const PLAN_LIMITS = {
+  FREE: {
+    workspaces: 10,
+    projects: 100,
+    tasks: 2000,
+    notes: 1000,
+    links: 1000,
+    documents: 500,
+    references: 500,
+    storageMb: 500,
+  },
+} as const;
+
+export type PlanName = keyof typeof PLAN_LIMITS;
+export type QuotaResource = keyof (typeof PLAN_LIMITS)['FREE'];
+
 export const PAGINATION_DEFAULTS = {
   PAGE: 1,
   LIMIT: 20,

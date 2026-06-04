@@ -7,6 +7,7 @@ import type {
 import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { assertWithinQuota } from '../../lib/quota.js';
 
 interface OwnerScope {
   ownerId: string;
@@ -103,6 +104,7 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateReferenceInput, scope: OwnerScope) {
+  await assertWithinQuota('references', scope.ownerId);
   await assertWorkspaceOwned(input.workspaceId, scope.ownerId);
   await assertProjectOwned(input.projectId, input.workspaceId, scope.ownerId);
   return prisma.reference.create({

@@ -9,6 +9,7 @@ import type {
 import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
+import { assertWithinQuota } from '../../lib/quota.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../lib/logger.js';
 import { isPublicHttpUrl } from '../../lib/url-safety.js';
@@ -130,6 +131,7 @@ export async function createFromUpload(
   upload: UploadInfo,
   scope: OwnerScope,
 ) {
+  await assertWithinQuota('documents', scope.ownerId);
   await ensureWorkspaceOwnership(meta.workspaceId, scope);
   await ensureProjectOwnership(meta.projectId, meta.workspaceId, scope);
   const fileUpload = await prisma.fileUpload.create({
@@ -165,6 +167,7 @@ export async function createFromExternal(
   input: CreateExternalDocumentInput,
   scope: OwnerScope,
 ) {
+  await assertWithinQuota('documents', scope.ownerId);
   // Defense in depth — Zod schema also runs the regex check, but reuse the
   // shared isPublicHttpUrl utility here so any future change to the
   // private-IP rules propagates automatically.

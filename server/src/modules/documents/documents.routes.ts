@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { Router } from 'express';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import {
   ok,
   PERMISSIONS,
@@ -98,9 +99,23 @@ documentsRouter.post(
   },
 );
 
+// Rate limit upload per-USER (bukan per-IP) — anti-abuse storage di SaaS publik.
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthenticatedRequest).user?.id ?? req.ip ?? 'anon',
+  message: {
+    success: false,
+    error: { message: 'Terlalu banyak upload. Coba lagi sebentar lagi.' },
+  },
+});
+
 /** Create document from file upload (multipart/form-data with `file` + meta fields). */
 documentsRouter.post(
   '/upload',
+  uploadLimiter,
   requirePermissions(PERMISSIONS.DOCUMENT_WRITE),
   requirePermissions(PERMISSIONS.FILE_UPLOAD),
   upload.single('file'),

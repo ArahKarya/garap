@@ -6,6 +6,7 @@ import type {
 } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ConflictError, ValidationError } from '../../lib/errors.js';
+import { assertWithinQuota } from '../../lib/quota.js';
 
 interface OwnerScope {
   ownerId: string;
@@ -59,6 +60,7 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateWorkspaceInput, scope: OwnerScope) {
+  await assertWithinQuota('workspaces', scope.ownerId);
   try {
     return await prisma.workspace.create({
       data: { ...input, ownerId: scope.ownerId },

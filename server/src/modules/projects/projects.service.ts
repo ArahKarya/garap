@@ -7,6 +7,7 @@ import type {
 import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { assertWithinQuota } from '../../lib/quota.js';
 
 interface OwnerScope {
   ownerId: string;
@@ -98,6 +99,7 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateProjectInput, scope: OwnerScope) {
+  await assertWithinQuota('projects', scope.ownerId);
   await assertWorkspaceOwned(input.workspaceId, scope.ownerId);
   return prisma.project.create({
     data: {

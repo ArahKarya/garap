@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { AppLayout } from './layouts/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { useAuthStore } from './stores/auth';
 
 // Eagerly load pages reachable on first paint after auth (Dashboard) so the
 // initial render is instant. Everything else is split into route chunks.
@@ -31,6 +32,26 @@ const UsersPage = lazy(() => import('./pages/UsersPage').then((m) => ({ default:
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage').then((m) => ({ default: m.AuditLogPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
+// Public marketing + legal pages — reachable without auth, lazy-loaded.
+const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })));
+const TermsPage = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })));
+
+/**
+ * Root path `/`: public landing for guests, but logged-in users are sent
+ * straight into the app at `/tasks`. Keeps the marketing page out of the
+ * authenticated AppLayout shell.
+ */
+function RootIndex() {
+  const user = useAuthStore((s) => s.user);
+  if (user) return <Navigate to="/tasks" replace />;
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <LandingPage />
+    </Suspense>
+  );
+}
+
 function PageFallback() {
   return (
     <div className="flex min-h-[40vh] items-center justify-center">
@@ -44,6 +65,25 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+      {/* Public marketing + legal — no auth, outside AppLayout/ProtectedRoute */}
+      <Route index element={<RootIndex />} />
+      <Route
+        path="/terms"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <TermsPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <PrivacyPage />
+          </Suspense>
+        }
+      />
       <Route
         path="/share"
         element={
@@ -62,7 +102,6 @@ export function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/tasks" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route
           path="calendar"

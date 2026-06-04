@@ -23,3 +23,7 @@ export const ConflictError = (message: string) => new AppError('CONFLICT', messa
 
 export const ValidationError = (message: string, details?: unknown) =>
   new AppError('VALIDATION_ERROR', message, 422, details);
+
+/** Batas paket (kuota) tercapai — sinyal untuk upgrade. HTTP 402. */
+export const QuotaError = (message: string, details?: unknown) =>
+  new AppError('QUOTA_EXCEEDED', message, 402, details);

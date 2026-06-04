@@ -3,6 +3,7 @@ import type { CreateLinkInput, UpdateLinkInput, LinkListQuery } from '@garap/sha
 import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { assertWithinQuota } from '../../lib/quota.js';
 import { fetchMetadata, detectPlatform } from './links.metadata.js';
 
 interface OwnerScope {
@@ -68,6 +69,7 @@ export async function get(id: string, scope: OwnerScope) {
 }
 
 export async function create(input: CreateLinkInput, scope: OwnerScope) {
+  await assertWithinQuota('links', scope.ownerId);
   const workspace = await prisma.workspace.findFirst({
     where: { id: input.workspaceId, ownerId: scope.ownerId, deletedAt: null },
     select: { id: true },
