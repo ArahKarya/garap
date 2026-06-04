@@ -30,12 +30,20 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
-  // Google OAuth — Panggon Mikir uses Google as primary login provider.
+  // Google OAuth — Garap uses Google as primary login provider.
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),
   GOOGLE_REDIRECT_URI: z.string().url().default('http://localhost:3007/api/auth/google/callback'),
-  // Comma-separated list of emails allowed to log in. Solo-user app: usually 1 email.
-  ALLOWED_EMAILS: z.string().min(1, 'ALLOWED_EMAILS is required (comma-separated)'),
+  // Signup mode:
+  //  - PUBLIC_SIGNUP=true  → siapa pun dengan email Google terverifikasi boleh daftar (SaaS publik).
+  //  - PUBLIC_SIGNUP=false → hanya email di ALLOWED_EMAILS yang boleh masuk (mode tertutup/privat).
+  // Default AMAN: false (tertutup). Flip ke true saat siap go-public.
+  PUBLIC_SIGNUP: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === '1'),
+  // Comma-separated allowlist — dipakai saat PUBLIC_SIGNUP=false. Boleh kosong.
+  ALLOWED_EMAILS: z.string().default(''),
 
   UPLOAD_DIR: z.string().default('./uploads'),
   UPLOAD_MAX_SIZE_MB: z.coerce.number().default(50),
@@ -43,7 +51,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
   BULL_BOARD_PATH: z.string().default('/admin/queues'),
 
-  SEED_ADMIN_EMAIL: z.string().email().default('admin@panggonmikir.local'),
+  SEED_ADMIN_EMAIL: z.string().email().default('admin@garap.local'),
   SEED_ADMIN_PASSWORD: z
     .string()
     .optional()

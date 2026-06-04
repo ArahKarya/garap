@@ -122,18 +122,23 @@ export async function loginWithGoogle(
     throw UnauthorizedError('Email Google belum terverifikasi');
   }
 
-  const allow = allowedEmails();
-  if (!allow.includes(profile.email)) {
-    await recordAudit({
-      userId: null,
-      userEmail: profile.email,
-      action: 'LOGIN_FAILED',
-      entity: 'auth.google',
-      ip,
-      userAgent,
-      diff: { reason: 'email-not-allowlisted' },
-    });
-    throw ForbiddenError('Email tidak diizinkan untuk masuk ke aplikasi ini');
+  // Gerbang signup. Email Google sudah terverifikasi (dicek di atas), jadi mode
+  // publik aman tanpa flow verifikasi email terpisah. Mode tertutup (default)
+  // tetap pakai allowlist ALLOWED_EMAILS.
+  if (!env.PUBLIC_SIGNUP) {
+    const allow = allowedEmails();
+    if (!allow.includes(profile.email)) {
+      await recordAudit({
+        userId: null,
+        userEmail: profile.email,
+        action: 'LOGIN_FAILED',
+        entity: 'auth.google',
+        ip,
+        userAgent,
+        diff: { reason: 'email-not-allowlisted' },
+      });
+      throw ForbiddenError('Pendaftaran sedang ditutup. Email kamu belum diizinkan.');
+    }
   }
 
   // Upsert user. If the email already exists, link Google sub. If new, create

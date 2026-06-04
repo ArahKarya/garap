@@ -38,13 +38,19 @@ ada pengguna bayar pertama.
 
 ## 2. PHASE 1 — Auth untuk Publik (BLOCKER)
 
-- [ ] Buang allowlist `ALLOWED_EMAILS` → **self-signup publik**.
-- [ ] **Matikan auto-SUPER_ADMIN** di `auth/google.service.ts` — user baru = role `USER`.
-      (Sekarang setiap signup baru jadi super-admin = bencana multi-user.)
-- [ ] Email verification saat signup (perlu email transaksional — Resend/SMTP).
-- [ ] "Lupa password" flow (saat ini cuma change-password butuh password lama).
+- [x] **Matikan auto-SUPER_ADMIN** (2026-06-04). User pertama = SUPER_ADMIN (platform
+      owner); signup berikutnya = role `MEMBER` (29 perm domain, CRUD data sendiri saja).
+- [x] **Kapabilitas self-signup publik** (2026-06-05) via flag `PUBLIC_SIGNUP`:
+      - `PUBLIC_SIGNUP=false` (default, AMAN) → hanya `ALLOWED_EMAILS` yang boleh.
+      - `PUBLIC_SIGNUP=true` → siapa pun dengan email Google **terverifikasi** boleh daftar.
+      Email Google sudah dicek `emailVerified` → tak perlu flow verifikasi email terpisah
+      untuk jalur Google. **Cara go-live: set `PUBLIC_SIGNUP=true` di `.env` lalu redeploy.**
+- [x] `/api/users/*` aman untuk pelanggan: sudah RBAC `user:*` yang TIDAK dimiliki MEMBER.
+- [ ] **JANGAN flip `PUBLIC_SIGNUP=true` sebelum** ada kuota/abuse-guard + billing (lihat
+      Phase 3 & 4) — open signup tanpa kuota = risiko abuse/biaya.
+- [ ] "Lupa password" flow untuk jalur email/password (jalur Google tak perlu).
 - [ ] Login Google: daftarkan domain `garap.arahkarya.com` di Google Cloud Console
-      (Authorized JS origins + redirect URI).
+      (Authorized JS origins + redirect URI) — **WAJIB, manual oleh owner.**
 
 ## 3. PHASE 2 — Isolasi Data / Tenancy (BLOCKER)
 

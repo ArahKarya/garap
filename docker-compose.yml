@@ -60,7 +60,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://garap.arahkarya.com/api/auth/google/callback}
-      ALLOWED_EMAILS: ${ALLOWED_EMAILS}
+      PUBLIC_SIGNUP: ${PUBLIC_SIGNUP:-false}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@garap.local}
       # Leave blank to skip local-admin seed; set to ≥12 chars to enable.
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
