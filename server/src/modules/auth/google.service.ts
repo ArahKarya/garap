@@ -177,6 +177,8 @@ export async function loginWithGoogle(
         data: { userId: created.id, roleId: role.id },
       });
     }
+    // Langganan default (FREE/ACTIVE) — pondasi billing B2C.
+    await prisma.subscription.create({ data: { userId: created.id } });
   }
 
   const authUser = await buildAuthUser(userId);

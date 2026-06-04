@@ -67,11 +67,18 @@ ada pengguna bayar pertama.
 
 ## 5. PHASE 4 — Billing & Langganan (revenue)
 
-- [ ] Desain plan (Free / Pro / dst) + kuota tiap tier (seats, storage, item limit).
-- [ ] Integrasi payment: Stripe / Paddle / Lemonsqueezy (Paddle/LS = merchant-of-record,
-      enak untuk pajak global; Stripe paling fleksibel).
-- [ ] Model `Subscription` + `Payment` + webhook + dunning (gagal bayar, cancel, downgrade).
-- [ ] Enforcement kuota di endpoint kunci.
+- [x] **Fondasi subscription** (2026-06-05, provider-agnostic):
+      - Plan `FREE` & `PRO` + limit per-tier di `PLAN_LIMITS`/`PLAN_CATALOG` (`@garap/shared`).
+      - Model Prisma `Subscription` (1 user = 1 langganan) + migrasi `add_subscription`.
+      - Kuota baca paket dari langganan user (fallback FREE) — enforcement sudah jalan.
+      - Signup auto-buat langganan FREE; user existing di-backfill.
+      - Endpoint `GET /api/billing/me` (paket+pemakaian) & `GET /api/billing/plans`.
+- [ ] **Integrasi payment provider** (BUTUH AKUN OWNER): Stripe / Paddle / LemonSqueezy
+      (Paddle/LS = merchant-of-record, enak pajak global; Stripe paling fleksibel).
+      Seam sudah ada di model (`provider`, `providerCustomerId`, `providerSubscriptionId`).
+- [ ] Checkout + webhook (upgrade/downgrade, gagal bayar/dunning, cancel).
+- [ ] UI: halaman paket/upgrade + indikator pemakaian (data sudah tersedia via API).
+- [ ] `Payment`/invoice log.
 
 ## 6. PHASE 5 — Skalabilitas & Ops (BLOCKER untuk "banyak user")
 

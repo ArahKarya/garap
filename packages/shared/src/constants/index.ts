@@ -141,10 +141,45 @@ export const PLAN_LIMITS = {
     references: 500,
     storageMb: 500,
   },
+  PRO: {
+    workspaces: 100,
+    projects: 2000,
+    tasks: 50000,
+    notes: 20000,
+    links: 20000,
+    documents: 10000,
+    references: 10000,
+    storageMb: 20000,
+  },
 } as const;
 
-export type PlanName = keyof typeof PLAN_LIMITS;
+export type PlanKey = keyof typeof PLAN_LIMITS;
+/** @deprecated pakai PlanKey */
+export type PlanName = PlanKey;
 export type QuotaResource = keyof (typeof PLAN_LIMITS)['FREE'];
+
+/**
+ * Katalog paket untuk tampilan & checkout. Harga dalam Rupiah (IDR) per bulan.
+ * `priceMonthly: 0` = gratis. Limit diambil dari PLAN_LIMITS[key].
+ */
+export const PLAN_CATALOG: Record<
+  PlanKey,
+  { key: PlanKey; name: string; priceMonthly: number; tagline: string }
+> = {
+  FREE: { key: 'FREE', name: 'Free', priceMonthly: 0, tagline: 'Untuk mulai mengatur kerja pribadi' },
+  PRO: { key: 'PRO', name: 'Pro', priceMonthly: 49000, tagline: 'Kapasitas besar untuk pemakaian serius' },
+};
+
+export const DEFAULT_PLAN: PlanKey = 'FREE';
+
+export const SUBSCRIPTION_STATUS = {
+  ACTIVE: 'ACTIVE',
+  TRIALING: 'TRIALING',
+  PAST_DUE: 'PAST_DUE',
+  CANCELED: 'CANCELED',
+} as const;
+export type SubscriptionStatus =
+  (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];
 
 export const PAGINATION_DEFAULTS = {
   PAGE: 1,

@@ -18,6 +18,7 @@ import { referencesRouter } from '../modules/references/references.routes.js';
 import { dashboardRouter } from '../modules/dashboard/dashboard.routes.js';
 import { searchRouter } from '../modules/search/search.routes.js';
 import { backupRouter } from '../modules/backup/backup.routes.js';
+import { billingRouter } from '../modules/billing/billing.routes.js';
 
 export const apiRouter = Router();
 
@@ -40,3 +41,4 @@ apiRouter.use('/references', referencesRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/search', searchRouter);
 apiRouter.use('/backup', backupRouter);
+apiRouter.use('/billing', billingRouter);

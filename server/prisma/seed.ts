@@ -122,11 +122,26 @@ async function seedSettings() {
   }
 }
 
+// Backfill: pastikan setiap user punya langganan (FREE) — idempotent.
+async function backfillSubscriptions() {
+  const users = await prisma.user.findMany({ select: { id: true } });
+  let created = 0;
+  for (const u of users) {
+    const existing = await prisma.subscription.findUnique({ where: { userId: u.id } });
+    if (!existing) {
+      await prisma.subscription.create({ data: { userId: u.id } });
+      created++;
+    }
+  }
+  console.log(`[seed] subscriptions backfilled: ${created} baru`);
+}
+
 async function main() {
   console.log('[seed] start');
   const superAdmin = await seedRoles();
   await seedAdminUser(superAdmin.id);
   await seedSettings();
+  await backfillSubscriptions();
   console.log('[seed] done');
 }
 

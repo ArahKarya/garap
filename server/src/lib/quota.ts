@@ -1,6 +1,18 @@
-import { PLAN_LIMITS, type QuotaResource } from '@garap/shared';
+import { PLAN_LIMITS, DEFAULT_PLAN, type PlanKey, type QuotaResource } from '@garap/shared';
 import { prisma } from './prisma.js';
 import { QuotaError } from './errors.js';
+
+/** Resolusi paket aktif user → limit. Fallback ke DEFAULT_PLAN bila tak ada/non-aktif. */
+export async function resolvePlanKey(ownerId: string): Promise<PlanKey> {
+  const sub = await prisma.subscription.findUnique({
+    where: { userId: ownerId },
+    select: { planKey: true, status: true },
+  });
+  if (sub && sub.status === 'ACTIVE' && sub.planKey in PLAN_LIMITS) {
+    return sub.planKey as PlanKey;
+  }
+  return DEFAULT_PLAN;
+}
 
 /**
  * Penegakan kuota per-user (anti-abuse signup publik). Saat ini semua user di
@@ -41,13 +53,24 @@ export async function assertWithinQuota(
   resource: Exclude<QuotaResource, 'storageMb'>,
   ownerId: string,
 ): Promise<void> {
-  const limit = PLAN_LIMITS.FREE[resource];
+  const planKey = await resolvePlanKey(ownerId);
+  const limit = PLAN_LIMITS[planKey][resource];
   const current = await COUNTERS[resource](ownerId);
   if (current >= limit) {
     throw QuotaError(
-      `Batas paket tercapai: maksimal ${limit} ${RESOURCE_LABEL[resource]} pada paket Free. ` +
+      `Batas paket ${planKey} tercapai: maksimal ${limit} ${RESOURCE_LABEL[resource]}. ` +
         `Hapus item lama atau upgrade paket.`,
-      { resource, limit, current },
+      { resource, limit, current, plan: planKey },
     );
   }
+}
+
+/** Hitung pemakaian semua resource (untuk tampilan billing). */
+export async function getUsage(ownerId: string): Promise<Record<string, number>> {
+  const entries = await Promise.all(
+    (Object.keys(COUNTERS) as Array<keyof typeof COUNTERS>).map(
+      async (k) => [k, await COUNTERS[k](ownerId)] as const,
+    ),
+  );
+  return Object.fromEntries(entries);
 }

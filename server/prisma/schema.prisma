@@ -36,8 +36,33 @@ model User {
   documents     Document[]
   references    Reference[]
   tags          Tag[]
+  subscription  Subscription?
 
   @@map("users")
+}
+
+/// Langganan paket per-user (B2C). Satu user = satu langganan aktif.
+/// Definisi limit/harga paket ada di kode (PLAN_LIMITS / PLAN_CATALOG di @garap/shared);
+/// tabel ini hanya menyimpan paket mana yang dipakai user + status + info provider.
+model Subscription {
+  id                     String    @id @default(cuid())
+  userId                 String    @unique @map("user_id")
+  planKey                String    @default("FREE") @map("plan_key")
+  status                 String    @default("ACTIVE")
+  currentPeriodEnd       DateTime? @map("current_period_end")
+  cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
+  // Seam untuk payment provider (Stripe/Paddle/LemonSqueezy) — diisi saat billing live.
+  provider               String?
+  providerCustomerId     String?   @map("provider_customer_id")
+  providerSubscriptionId String?   @map("provider_subscription_id")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([planKey])
+  @@index([status])
+  @@map("subscriptions")
 }
 
 model Role {
