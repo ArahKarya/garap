@@ -4,16 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createTagSchema, type CreateTagInput } from '@panggonmikir/shared';
-import { Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Pencil, Trash2, Tag as TagIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -110,80 +108,71 @@ export function TagsPage() {
         }
       />
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead className="text-center">Dipakai</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tagsQuery.isLoading &&
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={3}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!tagsQuery.isLoading && (!tagsQuery.data || tagsQuery.data.length === 0) && (
-              <TableRow>
-                <TableCell colSpan={3}>
-                  <EmptyState description="Belum ada tag." />
-                </TableCell>
-              </TableRow>
-            )}
-            {tagsQuery.data?.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell>
-                  <RouterLink to={`/tags/${t.id}`} className="inline-block">
-                    <Badge
-                      variant="outline"
-                      className="text-xs hover:opacity-80 cursor-pointer"
-                      style={
-                        t.color
-                          ? {
-                              borderColor: t.color,
-                              color: t.color,
-                            }
-                          : undefined
-                      }
-                    >
-                      {t.name}
-                    </Badge>
-                  </RouterLink>
-                </TableCell>
-                <TableCell className="text-center">
-                  <RouterLink
-                    to={`/tags/${t.id}`}
-                    className="hover:underline"
-                  >
-                    {t._count?.taggings ?? 0}
-                  </RouterLink>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(t)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm(`Hapus tag "${t.name}"?`)) deleteMutation.mutate(t.id);
-                      }}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+      <Card className="overflow-hidden p-0">
+        {tagsQuery.isLoading && (
+          <div className="divide-y">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="h-5 w-5 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        )}
+
+        {!tagsQuery.isLoading && (!tagsQuery.data || tagsQuery.data.length === 0) && (
+          <EmptyState
+            icon={TagIcon}
+            title="Belum ada tag"
+            description="Buat tag untuk mengelompokkan task, project, link, note, dan document."
+          />
+        )}
+
+        {!tagsQuery.isLoading && tagsQuery.data && tagsQuery.data.length > 0 && (
+          <div className="divide-y">
+            {tagsQuery.data.map((t) => (
+              <div
+                key={t.id}
+                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent/40"
+              >
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: t.color ?? 'var(--muted-foreground)' }}
+                />
+                <RouterLink
+                  to={`/tags/${t.id}`}
+                  className="min-w-0 flex-1 truncate text-sm font-medium hover:text-primary"
+                >
+                  {t.name}
+                </RouterLink>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {t._count?.taggings ?? 0} item
+                </span>
+                <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => openEdit(t)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      if (confirm(`Hapus tag "${t.name}"?`)) deleteMutation.mutate(t.id);
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>

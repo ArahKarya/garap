@@ -24,7 +24,6 @@ import { useWorkspaces, type WorkspaceRow } from '@/hooks/useWorkspaces';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
@@ -64,7 +63,7 @@ export function WorkspacesPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormShape>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', color: '#2563ab' },
+    defaultValues: { name: '', color: '#10b981' },
   });
 
   const upsertMutation = useMutation({
@@ -143,7 +142,7 @@ export function WorkspacesPage() {
 
   const openCreate = (): void => {
     setEditing(null);
-    reset({ name: '', color: '#2563ab', description: '', icon: '' });
+    reset({ name: '', color: '#10b981', description: '', icon: '' });
     setOpen(true);
   };
 
@@ -152,7 +151,7 @@ export function WorkspacesPage() {
     reset({
       name: w.name,
       description: w.description ?? '',
-      color: w.color ?? '#2563ab',
+      color: w.color ?? '#10b981',
       icon: w.icon ?? '',
       sortOrder: w.sortOrder,
       isDefault: w.isDefault,
@@ -178,128 +177,129 @@ export function WorkspacesPage() {
         }
       />
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-center">Projects</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading &&
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={4}>
-                    <Skeleton className="h-5 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!isLoading && (!workspaces || workspaces.length === 0) && (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <EmptyState
-                    title="Belum ada workspace"
-                    description="Klik 'Workspace Baru' untuk mulai."
+      {isLoading && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="mt-3 h-3 w-full" />
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && (!workspaces || workspaces.length === 0) && (
+        <Card className="p-0">
+          <EmptyState
+            icon={Briefcase}
+            title="Belum ada workspace"
+            description="Klik 'Workspace Baru' untuk mulai mengelola context per perusahaan / klien."
+            action={
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                Workspace Baru
+              </Button>
+            }
+          />
+        </Card>
+      )}
+
+      {!isLoading && workspaces && workspaces.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {workspaces.map((w) => (
+            <Card
+              key={w.id}
+              className="group relative overflow-hidden p-0 transition-colors hover:border-primary/40"
+            >
+              <span
+                className="absolute inset-x-0 top-0 h-1"
+                style={{ backgroundColor: w.color ?? 'var(--primary)' }}
+              />
+              <div className="p-4 pt-5">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: w.color ?? 'var(--primary)' }}
                   />
-                </TableCell>
-              </TableRow>
-            )}
-            {workspaces?.map((w) => (
-              <TableRow key={w.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-xs font-bold text-white"
-                      style={{ backgroundColor: w.color ?? '#475569' }}
-                    >
-                      {w.name.charAt(0).toUpperCase()}
-                    </span>
-                    <div>
-                      <div className="font-medium flex items-center gap-2">
-                        {w.name}
-                        {w.isDefault && (
-                          <Badge variant="secondary" className="text-[10px] gap-1">
-                            <Star className="h-3 w-3 fill-current" /> Default
-                          </Badge>
-                        )}
-                      </div>
-                      {w.description && (
-                        <div className="text-xs text-muted-foreground">{w.description}</div>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {w.archivedAt ? (
-                    <Badge variant="outline" className="text-xs">Archived</Badge>
-                  ) : (
-                    <Badge variant="default" className="text-xs">Aktif</Badge>
+                  <h3 className="truncate text-sm font-semibold">{w.name}</h3>
+                  {w.isDefault && (
+                    <Badge variant="outline" className="gap-1 text-[10px]">
+                      <Star className="h-3 w-3 fill-current" /> Default
+                    </Badge>
                   )}
-                </TableCell>
-                <TableCell className="text-center">
-                  {w._count?.projects ?? 0}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    {!w.isDefault && !w.archivedAt && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDefaultMutation.mutate(w.id)}
-                        disabled={setDefaultMutation.isPending}
-                        title="Jadikan default"
-                      >
-                        <Star className="h-4 w-4" />
-                      </Button>
+                </div>
+                <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-xs text-muted-foreground">
+                  {w.description || 'Tidak ada deskripsi.'}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px]">
+                    {w.archivedAt ? 'Archived' : 'Aktif'}
+                  </Badge>
+                  <span className="flex items-center gap-1">
+                    <Briefcase className="h-3 w-3" />
+                    {w._count?.projects ?? 0} project
+                  </span>
+                </div>
+              </div>
+              <div className="absolute right-2 top-2 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100">
+                {!w.isDefault && !w.archivedAt && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setDefaultMutation.mutate(w.id)}
+                    disabled={setDefaultMutation.isPending}
+                    title="Jadikan default"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                {!w.isDefault && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() =>
+                      archiveMutation.mutate({
+                        id: w.id,
+                        archive: !w.archivedAt,
+                      })
+                    }
+                    disabled={archiveMutation.isPending}
+                    title={w.archivedAt ? 'Aktifkan kembali' : 'Arsipkan'}
+                  >
+                    {w.archivedAt ? (
+                      <ArchiveRestore className="h-3.5 w-3.5" />
+                    ) : (
+                      <Archive className="h-3.5 w-3.5" />
                     )}
-                    {!w.isDefault && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          archiveMutation.mutate({
-                            id: w.id,
-                            archive: !w.archivedAt,
-                          })
-                        }
-                        disabled={archiveMutation.isPending}
-                        title={w.archivedAt ? 'Aktifkan kembali' : 'Arsipkan'}
-                      >
-                        {w.archivedAt ? (
-                          <ArchiveRestore className="h-4 w-4" />
-                        ) : (
-                          <Archive className="h-4 w-4" />
-                        )}
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEdit(w)}
-                      title="Edit"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    {!w.isDefault && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteCandidate(w)}
-                        title="Hapus"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => openEdit(w)}
+                  title="Edit"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                {!w.isDefault && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setDeleteCandidate(w)}
+                    title="Hapus"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">

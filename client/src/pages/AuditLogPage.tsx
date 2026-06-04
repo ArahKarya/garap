@@ -1,17 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { FileText } from 'lucide-react';
 import { formatDateTimeID } from '@panggonmikir/shared';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { EmptyState } from '@/components/shared/empty-state';
 
 interface AuditRow {
   id: string;
@@ -52,67 +46,55 @@ export function AuditLogPage() {
         </p>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-44">Waktu</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead className="w-32">IP</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading &&
-              Array.from({ length: 6 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-32" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-40" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-16" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-16" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {data?.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {formatDateTimeID(r.createdAt)}
-                </TableCell>
-                <TableCell>{r.userEmail ?? '-'}</TableCell>
-                <TableCell>
-                  <Badge variant={actionVariant(r.action)}>{r.action}</Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="font-medium">{r.entity}</span>
-                  {r.entityId && (
-                    <span className="ml-1 text-xs text-muted-foreground">· {r.entityId}</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground font-mono text-xs">
-                  {r.ip ?? '-'}
-                </TableCell>
-              </TableRow>
+      <Card className="overflow-hidden p-0">
+        {isLoading && (
+          <div className="divide-y">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="h-8 w-8 rounded-lg" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
             ))}
-            {!isLoading && data?.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  Belum ada aktivitas.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+          </div>
+        )}
+        {!isLoading && (!data || data.length === 0) && (
+          <EmptyState
+            icon={FileText}
+            title="Belum ada aktivitas"
+            description="Aktivitas sistem — mutasi, login, dan export — akan muncul di sini."
+          />
+        )}
+        {!isLoading && data && data.length > 0 && (
+          <div className="divide-y">
+            {data.map((log) => (
+              <div key={log.id} className="flex items-start gap-3 px-4 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <FileText className="h-3.5 w-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <Badge variant={actionVariant(log.action)} className="text-[10px]">
+                      {log.action}
+                    </Badge>
+                    <span className="font-medium">{log.entity}</span>
+                    {log.entityId && (
+                      <span className="text-xs text-muted-foreground">· {log.entityId}</span>
+                    )}
+                    {log.userEmail && (
+                      <span className="text-xs text-muted-foreground">{log.userEmail}</span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDateTimeID(log.createdAt)}
+                    {log.ip && (
+                      <span className="ml-2 font-mono">{log.ip}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );
