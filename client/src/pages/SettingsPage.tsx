@@ -2,8 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordSchema, type ChangePasswordInput } from '@panggonmikir/shared';
-import { Download, Loader2, KeyRound, AlertTriangle } from 'lucide-react';
+import {
+  Download,
+  Loader2,
+  KeyRound,
+  AlertTriangle,
+  Trash2,
+  Briefcase,
+  Users,
+  FileText,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -64,13 +76,108 @@ function getErrorMessage(err: unknown): string | null {
   return null;
 }
 
+interface SectionLink {
+  to: string;
+  icon: typeof Trash2;
+  label: string;
+  description: string;
+  permission: string | null;
+}
+
+const contentLinks: SectionLink[] = [
+  {
+    to: '/calendar',
+    icon: CalendarIcon,
+    label: 'Kalender',
+    description: 'Tampilan kalender semua task dengan tenggat',
+    permission: 'task:read',
+  },
+];
+
+const managementLinks: SectionLink[] = [
+  {
+    to: '/trash',
+    icon: Trash2,
+    label: 'Trash',
+    description: 'Item yang telah dihapus — bisa dipulihkan',
+    permission: null,
+  },
+  {
+    to: '/workspaces',
+    icon: Briefcase,
+    label: 'Workspaces',
+    description: 'Kelola workspace (container untuk task, project, note)',
+    permission: 'workspace:read',
+  },
+  {
+    to: '/users',
+    icon: Users,
+    label: 'Pengguna',
+    description: 'Daftar user yang punya akses ke aplikasi',
+    permission: 'user:read',
+  },
+  {
+    to: '/audit-logs',
+    icon: FileText,
+    label: 'Audit Log',
+    description: 'Riwayat perubahan data untuk audit',
+    permission: 'audit:read',
+  },
+];
+
+interface LinkSectionProps {
+  title: string;
+  description: string;
+  links: SectionLink[];
+}
+
+function LinkSection({ title, description, links }: LinkSectionProps) {
+  if (links.length === 0) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="flex items-center gap-3 px-6 py-3 hover:bg-accent/50 transition-colors"
+            >
+              <link.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{link.label}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {link.description}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SettingsPage() {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
+  const hasPermission = useAuthStore((s) => s.hasPermission);
   const [downloading, setDownloading] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
+
+  const visibleContent = contentLinks.filter(
+    (l) => !l.permission || hasPermission(l.permission),
+  );
+  const visibleManagement = managementLinks.filter(
+    (l) => !l.permission || hasPermission(l.permission),
+  );
 
   const settingsQuery = useQuery({
     queryKey: ['settings'],
@@ -187,6 +294,20 @@ export function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* ── Tampilan tambahan ────────────────────────────────────────────── */}
+      <LinkSection
+        title="Tampilan tambahan"
+        description="View alternatif yang tidak ditaruh di sidebar utama"
+        links={visibleContent}
+      />
+
+      {/* ── Pengelolaan (admin/maintenance links) ────────────────────────── */}
+      <LinkSection
+        title="Pengelolaan"
+        description="Akses cepat ke menu admin & pemulihan data"
+        links={visibleManagement}
+      />
 
       {/* ── Backup data ──────────────────────────────────────────────────── */}
       <Card>

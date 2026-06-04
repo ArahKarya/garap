@@ -94,7 +94,7 @@ export function LoginPage() {
   const completeLogin = (data: LoginResponse): void => {
     setAuth(data.user, data.tokens);
     const state = location.state as LocationState | null;
-    const from = state?.from?.pathname ?? '/dashboard';
+    const from = state?.from?.pathname ?? '/tasks';
     navigate(from, { replace: true });
     toast.success(`Selamat datang, ${data.user.name}`);
   };

@@ -58,7 +58,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
     formState: { errors, isSubmitting },
   } = useForm<CreateWorkspaceInput>({
     resolver: zodResolver(createWorkspaceSchema),
-    defaultValues: { name: '', color: '#2563ab' },
+    defaultValues: { name: '', color: '#10b981' },
   });
 
   const createMutation = useMutation({

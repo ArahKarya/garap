@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Users,
-  FileText,
   Settings,
   LogOut,
   Menu,
@@ -12,15 +10,11 @@ import {
   KeyRound,
   CheckSquare,
   FolderKanban,
-  Link as LinkIcon,
-  Tag as TagIcon,
   StickyNote,
+  Link as LinkIcon,
   FileBox,
-  Trash2,
-  Search as SearchIcon,
-  Calendar as CalendarIcon,
-  Briefcase,
   BookOpen,
+  Search as SearchIcon,
 } from 'lucide-react';
 import { CommandPalette, useCommandPaletteShortcut } from '@/components/CommandPalette';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -51,24 +45,18 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   permission: string | null;
+  group: 'main' | 'footer';
 }
 
 const nav: NavItem[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: null },
-  { to: '/search', label: 'Cari', icon: SearchIcon, permission: null },
-  { to: '/calendar', label: 'Kalender', icon: CalendarIcon, permission: 'task:read' },
-  { to: '/tasks', label: 'Tasks', icon: CheckSquare, permission: 'task:read' },
-  { to: '/projects', label: 'Projects', icon: FolderKanban, permission: 'project:read' },
-  { to: '/links', label: 'Links', icon: LinkIcon, permission: 'link:read' },
-  { to: '/notes', label: 'Notes', icon: StickyNote, permission: 'note:read' },
-  { to: '/documents', label: 'Documents', icon: FileBox, permission: 'document:read' },
-  { to: '/references', label: 'Jurnal & Referensi', icon: BookOpen, permission: 'reference:read' },
-  { to: '/tags', label: 'Tags', icon: TagIcon, permission: 'tag:read' },
-  { to: '/workspaces', label: 'Workspaces', icon: Briefcase, permission: 'workspace:read' },
-  { to: '/trash', label: 'Trash', icon: Trash2, permission: null },
-  { to: '/users', label: 'Users', icon: Users, permission: 'user:read' },
-  { to: '/audit-logs', label: 'Audit Log', icon: FileText, permission: 'audit:read' },
-  { to: '/settings', label: 'Settings', icon: Settings, permission: 'settings:read' },
+  { to: '/tasks', label: 'Tasks', icon: CheckSquare, permission: 'task:read', group: 'main' },
+  { to: '/projects', label: 'Projects', icon: FolderKanban, permission: 'project:read', group: 'main' },
+  { to: '/notes', label: 'Notes', icon: StickyNote, permission: 'note:read', group: 'main' },
+  { to: '/links', label: 'Links', icon: LinkIcon, permission: 'link:read', group: 'main' },
+  { to: '/documents', label: 'Documents', icon: FileBox, permission: 'document:read', group: 'main' },
+  { to: '/references', label: 'Jurnal & Referensi', icon: BookOpen, permission: 'reference:read', group: 'main' },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: null, group: 'footer' },
+  { to: '/settings', label: 'Settings', icon: Settings, permission: 'settings:read', group: 'footer' },
 ];
 
 interface SidebarContentProps {
@@ -79,29 +67,39 @@ interface SidebarContentProps {
 function SidebarContent({ collapsed, onNavigate }: SidebarContentProps) {
   const hasPermission = useAuthStore((s) => s.hasPermission);
 
+  const visible = nav.filter((n) => !n.permission || hasPermission(n.permission));
+  const main = visible.filter((n) => n.group === 'main');
+  const footer = visible.filter((n) => n.group === 'footer');
+
+  const renderItem = (item: NavItem) => (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          isActive
+            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+            : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
+          collapsed && 'justify-center px-2',
+        )
+      }
+    >
+      <item.icon className="h-4 w-4 shrink-0" />
+      {!collapsed && <span>{item.label}</span>}
+    </NavLink>
+  );
+
   return (
-    <nav className="flex-1 space-y-1 p-3">
-      {nav
-        .filter((n) => !n.permission || hasPermission(n.permission))
-        .map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
-                collapsed && 'justify-center px-2',
-              )
-            }
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-          </NavLink>
-        ))}
+    <nav className="flex-1 flex flex-col p-3">
+      <div className="space-y-1">{main.map(renderItem)}</div>
+      {footer.length > 0 && (
+        <>
+          <div className="my-3 border-t border-sidebar-border/60" />
+          <div className="space-y-1">{footer.map(renderItem)}</div>
+        </>
+      )}
     </nav>
   );
 }
