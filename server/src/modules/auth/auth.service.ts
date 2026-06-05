@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
-import type { AuthTokens, AuthUser, LoginInput } from '@garap/shared';
+import { ROLES, type AuthTokens, type AuthUser, type LoginInput, type RegisterInput } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import {
   parseDurationToSeconds,
@@ -8,7 +8,7 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../../lib/jwt.js';
-import { UnauthorizedError } from '../../lib/errors.js';
+import { UnauthorizedError, ConflictError, ForbiddenError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
 import { recordAudit } from '../../middleware/audit.js';
 
@@ -89,6 +89,50 @@ export async function login(input: LoginInput, ip: string | null, userAgent: str
     userEmail: user.email,
     action: 'LOGIN',
     entity: 'auth',
+    ip,
+    userAgent,
+    diff: null,
+  });
+
+  return { user: authUser, tokens };
+}
+
+/**
+ * Pendaftaran publik email/password (B2C). Hanya aktif saat PUBLIC_SIGNUP=true.
+ * User pertama di sistem = SUPER_ADMIN (platform owner); selebihnya = MEMBER +
+ * langganan FREE. Catatan: verifikasi email belum ada (TODO sebelum skala besar).
+ */
+export async function register(input: RegisterInput, ip: string | null, userAgent: string | null) {
+  if (!env.PUBLIC_SIGNUP) {
+    throw ForbiddenError('Pendaftaran sedang ditutup.');
+  }
+  const email = input.email.trim().toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    throw ConflictError('Email sudah terdaftar. Silakan masuk.');
+  }
+
+  const isFirstUser = (await prisma.user.count()) === 0;
+  const passwordHash = await bcrypt.hash(input.password, 10);
+  const user = await prisma.user.create({
+    data: { email, name: input.name.trim(), passwordHash, isActive: true },
+  });
+
+  const roleName = isFirstUser ? ROLES.SUPER_ADMIN : ROLES.MEMBER;
+  const role = await prisma.role.findUnique({ where: { name: roleName } });
+  if (role) {
+    await prisma.userRole.create({ data: { userId: user.id, roleId: role.id } });
+  }
+  await prisma.subscription.create({ data: { userId: user.id } });
+
+  const authUser = await buildAuthUser(user.id);
+  const tokens = await issueTokens(authUser, ip);
+
+  await recordAudit({
+    userId: user.id,
+    userEmail: user.email,
+    action: 'CREATE',
+    entity: 'auth.register',
     ip,
     userAgent,
     diff: null,

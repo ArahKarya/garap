@@ -21,7 +21,7 @@ export interface TestUser {
 export async function createTestUser(opts?: { role?: string }): Promise<TestUser> {
   testCounter += 1;
   const suffix = `${Date.now()}-${testCounter}`;
-  const email = `test-${suffix}@panggonmikir.test`;
+  const email = `test-${suffix}@garap.test`;
   const passwordHash = await bcrypt.hash('test-password-123', 4);
 
   const role = await prisma.role.upsert({

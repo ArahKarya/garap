@@ -6,7 +6,7 @@ import { auditRouter } from '../modules/audit/audit.routes.js';
 import { settingsRouter } from '../modules/settings/settings.routes.js';
 import { notificationsRouter } from '../modules/notifications/notifications.routes.js';
 import { healthRouter } from '../modules/health/health.routes.js';
-// Panggon Mikir domain routers
+// Garap domain routers
 import { workspacesRouter } from '../modules/workspaces/workspaces.routes.js';
 import { tasksRouter } from '../modules/tasks/tasks.routes.js';
 import { projectsRouter } from '../modules/projects/projects.routes.js';
@@ -29,7 +29,7 @@ apiRouter.use('/roles', rolesRouter);
 apiRouter.use('/audit-logs', auditRouter);
 apiRouter.use('/settings', settingsRouter);
 apiRouter.use('/notifications', notificationsRouter);
-// ─── Panggon Mikir domain ────────────────────────────────────────────────
+// ─── Garap domain ────────────────────────────────────────────────
 apiRouter.use('/workspaces', workspacesRouter);
 apiRouter.use('/tasks', tasksRouter);
 apiRouter.use('/projects', projectsRouter);

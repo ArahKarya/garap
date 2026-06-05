@@ -47,7 +47,7 @@ export const PERMISSIONS = {
   REPORT_EXPORT: 'report:export',
   JOB_READ: 'job:read',
   JOB_MANAGE: 'job:manage',
-  // Domain permissions for Panggon Mikir
+  // Domain permissions for Garap
   WORKSPACE_READ: 'workspace:read',
   WORKSPACE_WRITE: 'workspace:write',
   WORKSPACE_DELETE: 'workspace:delete',
@@ -118,7 +118,7 @@ export const JOB_QUEUES = {
   REPORT: 'report',
   NOTIFICATION: 'notification',
   CLEANUP: 'cleanup',
-  // Panggon Mikir domain queues
+  // Garap domain queues
   LINK_HEALTH: 'link-health',
   REMINDER: 'reminder',
 } as const;
@@ -202,7 +202,7 @@ export const AUDIT_ACTIONS = {
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
 
-// Panggon Mikir domain enums (mirrors Prisma enums)
+// Garap domain enums (mirrors Prisma enums)
 export const TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 

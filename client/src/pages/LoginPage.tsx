@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginInput, BRANDING } from '@garap/shared';
+import {
+  loginSchema,
+  type LoginInput,
+  registerSchema,
+  type RegisterInput,
+  BRANDING,
+} from '@garap/shared';
 import { toast } from 'sonner';
 import {
   Loader2,
@@ -53,9 +59,9 @@ declare global {
 function getErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'response' in err) {
     const response = (err as { response?: { data?: { error?: { message?: string } } } }).response;
-    return response?.data?.error?.message ?? 'Login gagal';
+    return response?.data?.error?.message ?? 'Terjadi kesalahan';
   }
-  return 'Login gagal';
+  return 'Terjadi kesalahan';
 }
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -89,6 +95,7 @@ export function LoginPage() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const completeLogin = (data: LoginResponse): void => {
@@ -157,15 +164,24 @@ export function LoginPage() {
   }, []);
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    register: registerLoginField,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = async (input: LoginInput): Promise<void> => {
+  const {
+    register: registerField,
+    handleSubmit: handleRegisterSubmit,
+    formState: { errors: registerErrors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { name: '', email: '', password: '' },
+  });
+
+  const onLoginSubmit = async (input: LoginInput): Promise<void> => {
     setLoading(true);
     try {
       const res = await api.post<{ data: LoginResponse }>('/auth/login', input);
@@ -175,6 +191,25 @@ export function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRegisterSubmit = async (input: RegisterInput): Promise<void> => {
+    setLoading(true);
+    try {
+      const res = await api.post<{ data: LoginResponse }>('/auth/register', input);
+      completeLogin(res.data.data);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isRegister = mode === 'register';
+
+  const toggleMode = (): void => {
+    setMode((m) => (m === 'login' ? 'register' : 'login'));
+    setShowPassword(false);
   };
 
   return (
@@ -193,9 +228,13 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-1 mb-6">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">Selamat datang</h2>
+            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+              {isRegister ? 'Buat akun Garap' : 'Selamat datang'}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Masuk dengan akun Google atau email-mu untuk lanjut.
+              {isRegister
+                ? 'Daftar dengan akun Google atau email-mu untuk mulai.'
+                : 'Masuk dengan akun Google atau email-mu untuk lanjut.'}
             </p>
           </div>
 
@@ -222,67 +261,155 @@ export function LoginPage() {
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            {/* Email/password form — always visible (no toggle hide) */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="anda@email.com"
-                  autoComplete="email"
-                  aria-invalid={!!errors.email}
-                  className="h-10"
-                  {...register('email')}
-                />
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email.message}</p>
-                )}
-              </div>
+            {/* Email/password form — login vs register */}
+            {isRegister ? (
+              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="register-name" className="text-xs">
+                    Nama
+                  </Label>
+                  <Input
+                    id="register-name"
+                    type="text"
+                    placeholder="Nama lengkap"
+                    autoComplete="name"
+                    aria-invalid={!!registerErrors.name}
+                    className="h-10"
+                    {...registerField('name')}
+                  />
+                  {registerErrors.name && (
+                    <p className="text-xs text-destructive">{registerErrors.name.message}</p>
+                  )}
+                </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs">
+                <div className="space-y-1.5">
+                  <Label htmlFor="register-email" className="text-xs">
+                    Email
+                  </Label>
+                  <Input
+                    id="register-email"
+                    type="email"
+                    placeholder="anda@email.com"
+                    autoComplete="email"
+                    aria-invalid={!!registerErrors.email}
+                    className="h-10"
+                    {...registerField('email')}
+                  />
+                  {registerErrors.email && (
+                    <p className="text-xs text-destructive">{registerErrors.email.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="register-password" className="text-xs">
                     Password
                   </Label>
-                  <span className="text-[10px] text-muted-foreground">
-                    Reset di Settings setelah login
-                  </span>
+                  <div className="relative">
+                    <Input
+                      id="register-password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      aria-invalid={!!registerErrors.password}
+                      className="h-10 pr-10"
+                      {...registerField('password')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  {registerErrors.password && (
+                    <p className="text-xs text-destructive">{registerErrors.password.message}</p>
+                  )}
                 </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    aria-invalid={!!errors.password}
-                    className="h-10 pr-10"
-                    {...register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-3.5 w-3.5" />
-                    ) : (
-                      <Eye className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-xs text-destructive">{errors.password.message}</p>
-                )}
-              </div>
 
-              <Button type="submit" className="w-full h-10" disabled={loading}>
-                {loading && <Loader2 className="animate-spin" />}
-                {loading ? 'Memproses…' : 'Masuk dengan email'}
-              </Button>
-            </form>
+                <Button type="submit" className="w-full h-10" disabled={loading}>
+                  {loading && <Loader2 className="animate-spin" />}
+                  {loading ? 'Memproses…' : 'Daftar dengan email'}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-xs">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="anda@email.com"
+                    autoComplete="email"
+                    aria-invalid={!!loginErrors.email}
+                    className="h-10"
+                    {...registerLoginField('email')}
+                  />
+                  {loginErrors.email && (
+                    <p className="text-xs text-destructive">{loginErrors.email.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-xs">
+                      Password
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground">
+                      Reset di Settings setelah login
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      aria-invalid={!!loginErrors.password}
+                      className="h-10 pr-10"
+                      {...registerLoginField('password')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  {loginErrors.password && (
+                    <p className="text-xs text-destructive">{loginErrors.password.message}</p>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full h-10" disabled={loading}>
+                  {loading && <Loader2 className="animate-spin" />}
+                  {loading ? 'Memproses…' : 'Masuk dengan email'}
+                </Button>
+              </form>
+            )}
+
+            {/* Toggle login <-> register */}
+            <p className="text-center text-xs text-muted-foreground">
+              {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                {isRegister ? 'Masuk' : 'Daftar'}
+              </button>
+            </p>
           </div>
 
           <p className="mt-8 text-center text-[10px] text-muted-foreground/60">

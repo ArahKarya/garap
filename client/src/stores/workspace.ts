@@ -12,6 +12,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       activeWorkspaceId: null,
       setActiveWorkspaceId: (id) => set({ activeWorkspaceId: id }),
     }),
-    { name: 'panggonmikir-workspace' },
+    { name: 'garap-workspace' },
   ),
 );

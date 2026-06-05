@@ -88,7 +88,7 @@ export async function fetchMetadata(url: string): Promise<LinkMetadata> {
       signal: controller.signal,
       redirect: 'follow',
       headers: {
-        'User-Agent': 'PanggonMikirBot/0.1 (+https://panggonmikir.arahkarya.com)',
+        'User-Agent': 'GarapBot/0.1 (+https://garap.arahkarya.com)',
         Accept: 'text/html,application/xhtml+xml',
       },
     });

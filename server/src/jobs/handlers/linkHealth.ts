@@ -29,14 +29,14 @@ async function checkLink(url: string): Promise<{ ok: boolean; status: number | n
       method: 'HEAD',
       signal: controller.signal,
       redirect: 'follow',
-      headers: { 'User-Agent': 'PanggonMikirHealth/0.1' },
+      headers: { 'User-Agent': 'GarapHealth/0.1' },
     });
     if (res.status === 405 || res.status === 501) {
       res = await fetch(url, {
         method: 'GET',
         signal: controller.signal,
         redirect: 'follow',
-        headers: { 'User-Agent': 'PanggonMikirHealth/0.1' },
+        headers: { 'User-Agent': 'GarapHealth/0.1' },
       });
     }
     return { ok: res.status >= 200 && res.status < 400, status: res.status };

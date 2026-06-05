@@ -47,7 +47,7 @@ backupRouter.get(
 
       const payload = {
         meta: {
-          app: 'Panggon Mikir',
+          app: 'Garap',
           version: 1,
           exportedAt: new Date().toISOString(),
           owner: user,
@@ -75,7 +75,7 @@ backupRouter.get(
       };
 
       // Trigger a file download in the browser.
-      const filename = `panggon-mikir-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const filename = `garap-backup-${new Date().toISOString().slice(0, 10)}.json`;
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.json(payload);

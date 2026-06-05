@@ -2,7 +2,7 @@
   "name": "garap",
   "version": "0.1.0",
   "private": true,
-  "description": "Panggon Mikir — Personal second brain (task, project, document, link, note) — built on ArahKarya framework",
+  "description": "Garap — Personal second brain (task, project, document, link, note) — built on ArahKarya framework",
   "author": "Yayang Setya Nugroho",
   "license": "MIT",
   "engines": {

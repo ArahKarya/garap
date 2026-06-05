@@ -105,8 +105,8 @@ async function seedAdminUser(superAdminRoleId: string) {
 
 async function seedSettings() {
   const defaults: Array<{ key: string; value: unknown }> = [
-    { key: 'app.name', value: 'Panggon Mikir' },
-    { key: 'app.tagline', value: 'Tempat berpikir, mengelola, dan menyimpan' },
+    { key: 'app.name', value: 'Garap' },
+    { key: 'app.tagline', value: 'Tempat menggarap task, project, dan file kerja' },
     { key: 'app.timezone', value: 'Asia/Jakarta' },
     { key: 'app.locale', value: 'id-ID' },
     { key: 'owner.name', value: 'Yayang Setya Nugroho' },

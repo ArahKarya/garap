@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 /**
  * Web Share Target endpoint. Mobile browsers + installed PWAs let users
- * "share to" Panggon Mikir from any other app — the OS hands us the
+ * "share to" Garap from any other app — the OS hands us the
  * `title`/`text`/`url` query params declared in manifest.json's
  * share_target.
  *
@@ -52,7 +52,7 @@ export function SharePage() {
   const handled = useRef(false);
 
   // Auto-create + redirect immediately if we have enough data and the user
-  // landed here from a share intent. This makes "share to Panggon Mikir"
+  // landed here from a share intent. This makes "share to Garap"
   // feel one-tap. If creation fails, fall through to the manual form.
   const { activeWorkspaceId } = useActiveWorkspace();
   const linkMutation = useMutation({
@@ -115,7 +115,7 @@ export function SharePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ArrowRight className="h-4 w-4" />
-            Simpan ke Panggon Mikir
+            Simpan ke Garap
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -1,12 +1,23 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Sparkles, Loader2 } from 'lucide-react';
+import { Check, Sparkles, Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+
+const ADMIN_EMAIL = 'yayang.nugroho.s@gmail.com';
 
 interface PlanInfo {
   key: string;
@@ -38,6 +49,17 @@ function rupiah(n: number): string {
 }
 
 export function BillingPage() {
+  const [upgradePlan, setUpgradePlan] = useState<PlanInfo | null>(null);
+
+  const copyAdminEmail = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(ADMIN_EMAIL);
+      toast.success('Email admin disalin');
+    } catch {
+      toast.error('Gagal menyalin email admin');
+    }
+  };
+
   const meQuery = useQuery({
     queryKey: ['billing', 'me'],
     queryFn: async () => {
@@ -162,12 +184,7 @@ export function BillingPage() {
                       Paket kamu saat ini
                     </Button>
                   ) : isPaid ? (
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        toast.info('Pembayaran online segera hadir. Hubungi admin untuk upgrade manual.')
-                      }
-                    >
+                    <Button className="w-full" onClick={() => setUpgradePlan(plan)}>
                       Upgrade ke {plan.name}
                     </Button>
                   ) : (
@@ -187,6 +204,51 @@ export function BillingPage() {
           <Loader2 className="h-4 w-4" /> Gagal memuat data billing.
         </p>
       )}
+
+      {/* Dialog upgrade manual (transfer bank) */}
+      <Dialog open={!!upgradePlan} onOpenChange={(open) => !open && setUpgradePlan(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upgrade ke Pro</DialogTitle>
+            <DialogDescription>
+              Paket {upgradePlan?.name} · {upgradePlan ? rupiah(upgradePlan.priceMonthly) : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm">
+            <p className="text-muted-foreground">
+              Transfer ke rekening berikut, lalu kirim bukti ke admin untuk aktivasi:
+            </p>
+
+            <div className="rounded-lg border bg-muted/40 p-4 space-y-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Rekening tujuan</p>
+                <p className="font-medium">BCA 1234567890</p>
+                <p className="text-xs text-muted-foreground">a.n. PT Arah Karya Sinergi</p>
+              </div>
+              <div className="pt-2 border-t">
+                <p className="text-xs text-muted-foreground">Kontak admin</p>
+                <p className="font-medium break-all">{ADMIN_EMAIL}</p>
+                <p className="text-xs text-muted-foreground">(email atau WhatsApp)</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Aktivasi manual ≤1×24 jam setelah konfirmasi. Pembayaran online otomatis menyusul.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setUpgradePlan(null)}>
+              Tutup
+            </Button>
+            <Button onClick={copyAdminEmail}>
+              <Copy className="h-4 w-4" />
+              Salin email admin
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

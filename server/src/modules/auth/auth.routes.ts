@@ -5,6 +5,7 @@ import {
   changePasswordSchema,
   googleLoginSchema,
   loginSchema,
+  registerSchema,
   refreshTokenSchema,
 } from '@garap/shared';
 import { validate, getValidated } from '../../middleware/validate.js';
@@ -119,6 +120,21 @@ authRouter.post('/login', credentialLimiter, validate(loginSchema), async (req, 
       req.headers['user-agent'] ?? null,
     );
     res.json(ok(result));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Pendaftaran publik email/password (aktif saat PUBLIC_SIGNUP=true).
+authRouter.post('/register', credentialLimiter, validate(registerSchema), async (req, res, next) => {
+  try {
+    const input = getValidated<import('@garap/shared').RegisterInput>(req);
+    const result = await authService.register(
+      input,
+      req.ip ?? null,
+      req.headers['user-agent'] ?? null,
+    );
+    res.status(201).json(ok(result));
   } catch (err) {
     next(err);
   }
