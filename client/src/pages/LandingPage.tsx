@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { BRANDING } from '@garap/shared';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -105,7 +106,80 @@ const REASONS: Reason[] = [
   },
 ];
 
+/** Ikon Garap yang mengambang bebas di hero (gaya Artani). */
+const HERO_ICONS: (typeof CheckSquare)[] = [
+  CheckSquare,
+  StickyNote,
+  LinkIcon,
+  FileText,
+  Calendar,
+  Tags,
+  BookMarked,
+  Command,
+  Search,
+];
+
+type FloatAnim =
+  | 'animate-float-slow'
+  | 'animate-float-medium'
+  | 'animate-float-fast'
+  | 'animate-bob';
+
+interface FloatingIcon {
+  id: number;
+  Icon: typeof CheckSquare;
+  top: string;
+  left: string;
+  size: number;
+  duration: number;
+  delay: number;
+  tint: string;
+  animation: FloatAnim;
+}
+
+interface Particle {
+  id: number;
+  left: number;
+  size: number;
+  duration: number;
+  delay: number;
+}
+
 export function LandingPage() {
+  // Ikon mengambang + partikel naik — di-memo sekali agar posisi acak stabil.
+  const floatingIcons: FloatingIcon[] = useMemo(() => {
+    const anims: FloatAnim[] = [
+      'animate-float-slow',
+      'animate-float-medium',
+      'animate-float-fast',
+      'animate-bob',
+    ];
+    const tints = ['text-white/10', 'text-white/[0.14]', 'text-emerald-100/20', 'text-teal-100/15'];
+    return Array.from({ length: 11 }).map((_, i) => ({
+      id: i,
+      Icon: HERO_ICONS[i % HERO_ICONS.length]!,
+      top: `${6 + Math.random() * 80}%`,
+      left: `${3 + Math.random() * 90}%`,
+      size: 26 + Math.random() * 34,
+      duration: 5 + Math.random() * 7,
+      delay: -Math.random() * 6,
+      tint: tints[i % tints.length]!,
+      animation: anims[i % anims.length]!,
+    }));
+  }, []);
+
+  const particles: Particle[] = useMemo(
+    () =>
+      Array.from({ length: 26 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        size: 3 + Math.random() * 6,
+        duration: 11 + Math.random() * 13,
+        delay: -Math.random() * 16,
+      })),
+    [],
+  );
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* ── Top nav ──────────────────────────────────────────────────── */}
@@ -130,62 +204,132 @@ export function LandingPage() {
       </header>
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        {/* Ambient decorative orbs — slow, subtle, infinite (reduced-motion aware) */}
+      <section
+        className="animate-gradient-flow relative overflow-hidden text-white"
+        style={{
+          backgroundImage:
+            'linear-gradient(135deg, #022c22 0%, #064e3b 22%, #0f766e 48%, #047857 72%, #0d9488 100%)',
+          backgroundSize: '200% 200%',
+        }}
+      >
+        {/* Cincin besar berputar lambat di belakang hero */}
         <div
           aria-hidden
-          className="animate-float absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
+          className="animate-spin-slow pointer-events-none absolute -top-1/3 -left-1/4 h-[140%] w-[140%] opacity-40"
+          style={{
+            background:
+              'conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.06) 60deg, transparent 120deg, rgba(255,255,255,0.06) 200deg, transparent 260deg, rgba(255,255,255,0.06) 320deg, transparent 360deg)',
+          }}
         />
+
+        {/* Partikel naik dari bawah */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          {particles.map((p) => (
+            <span
+              key={p.id}
+              className="animate-drift-up absolute bottom-[-20px] rounded-full bg-white/40"
+              style={{
+                left: `${p.left}%`,
+                width: p.size,
+                height: p.size,
+                animationDuration: `${p.duration}s`,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Ikon Garap mengambang */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {floatingIcons.map((f) => {
+            const Icon = f.Icon;
+            return (
+              <Icon
+                key={f.id}
+                className={`absolute ${f.tint} ${f.animation}`}
+                style={{
+                  top: f.top,
+                  left: f.left,
+                  width: f.size,
+                  height: f.size,
+                  animationDuration: `${f.duration}s`,
+                  animationDelay: `${f.delay}s`,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Gelombang transisi di bawah hero */}
         <div
           aria-hidden
-          className="animate-breathe pointer-events-none absolute top-10 left-[12%] h-64 w-64 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="animate-breathe pointer-events-none absolute top-24 right-[8%] h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"
-          style={{ animationDelay: '2s', animationDuration: '9s' }}
-        />
-        <div className="relative mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 sm:py-28">
-          <div
-            className="animate-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground"
-            style={{ animationDelay: '60ms' }}
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 overflow-hidden sm:h-32"
+        >
+          <svg
+            className="animate-wave-x absolute inset-x-0 bottom-0 h-full w-[200%]"
+            viewBox="0 0 1440 120"
+            preserveAspectRatio="none"
           >
-            <Sparkles className="h-3 w-3 text-primary" />
+            <path
+              d="M0,64 C240,96 480,32 720,64 C960,96 1200,32 1440,64 L1440,120 L0,120 Z"
+              fill="rgba(255,255,255,0.06)"
+            />
+            <path
+              d="M0,80 C240,48 480,112 720,80 C960,48 1200,112 1440,80 L1440,120 L0,120 Z"
+              fill="rgba(255,255,255,0.04)"
+            />
+          </svg>
+        </div>
+
+        <div className="relative mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 sm:py-28">
+          <div className="animate-in fade-in slide-in-from-bottom-3 mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs text-white/90 backdrop-blur-sm duration-700">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300" />
+            </span>
             <span>Personal second brain</span>
           </div>
-          <h1
-            className="animate-fade-up font-heading text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl"
-            style={{ animationDelay: '160ms' }}
-          >
+          <h1 className="animate-in fade-in slide-in-from-bottom-4 font-heading text-4xl font-bold leading-tight tracking-tight text-white duration-700 sm:text-5xl md:text-6xl">
             Tempat menggarap
             <br />
-            <span className="text-primary">task, project, dan file kerja</span>
+            <span
+              style={{
+                backgroundImage:
+                  'linear-gradient(120deg, #ffffff 0%, #d1fae5 40%, #a7f3d0 60%, #ccfbf1 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
+            >
+              task, project, dan file kerja
+            </span>
           </h1>
-          <p
-            className="animate-fade-up mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
-            style={{ animationDelay: '280ms' }}
-          >
+          <p className="animate-in fade-in slide-in-from-bottom-4 mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/90 delay-150 duration-700 sm:text-lg">
             Satu rumah untuk task, project, note, link, dokumen, dan referensi — terhubung
             lewat tag universal dan siap dicari kapan saja.
           </p>
-          <div
-            className="animate-fade-up mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
-            style={{ animationDelay: '400ms' }}
-          >
-            <Button asChild size="lg" className="w-full sm:w-auto">
+          <div className="animate-in fade-in slide-in-from-bottom-4 mt-8 flex flex-col items-center justify-center gap-3 delay-300 duration-700 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              variant="secondary"
+              className="w-full bg-white text-emerald-800 shadow-xl shadow-black/10 hover:bg-white/90 sm:w-auto"
+            >
               <Link to="/login">
                 Masuk / Mulai
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="w-full border-2 border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white sm:w-auto"
+            >
               <a href="#fitur">Lihat fitur</a>
             </Button>
           </div>
-          <p
-            className="animate-fade-up mt-4 text-xs text-muted-foreground/70"
-            style={{ animationDelay: '500ms' }}
-          >
+          <p className="animate-in fade-in slide-in-from-bottom-4 mt-4 text-xs text-white/70 delay-500 duration-700">
             Masuk dengan akun Google. Gratis untuk pemakaian personal.
           </p>
         </div>
@@ -205,10 +349,10 @@ export function LandingPage() {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f, i) => (
               <Reveal key={f.label} index={i} className="h-full">
-                <Card className="h-full transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md">
+                <Card className="group h-full transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md">
                   <CardContent className="p-5">
-                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <f.icon className="h-5 w-5" />
+                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform group-hover:scale-110">
+                      <f.icon className="h-5 w-5 group-hover:animate-bob" />
                     </div>
                     <h3 className="font-heading text-base font-semibold">{f.label}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
