@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { BRANDING } from '@garap/shared';
 import { BrandLogo } from '@/components/BrandLogo';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export interface LegalSection {
   heading: string;
@@ -30,13 +31,16 @@ export function LegalLayout({ title, effectiveDate, intro, sections }: LegalLayo
             <BrandLogo className="h-7 w-7" />
             <span className="font-heading text-base font-bold">{BRANDING.APP_NAME}</span>
           </Link>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Beranda
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Beranda
+            </Link>
+          </div>
         </div>
       </header>
 

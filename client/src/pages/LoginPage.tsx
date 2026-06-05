@@ -23,6 +23,7 @@ import {
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import { BrandLogo } from '@/components/BrandLogo';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -213,7 +214,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
+    <div className="relative min-h-screen grid lg:grid-cols-2 bg-background">
+      <div className="absolute right-3 top-3 z-30">
+        <ThemeToggle />
+      </div>
       {/* ── Left: brand showcase (hidden on small screens) ─────────────── */}
       <BrandShowcase />
 

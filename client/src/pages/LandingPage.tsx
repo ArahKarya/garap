@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BRANDING } from '@garap/shared';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   CheckSquare,
   StickyNote,
@@ -14,10 +15,16 @@ import {
   Moon,
   Smartphone,
   ArrowRight,
+  Github,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+
+/** Repo open-source Garap. Catatan: repo masih privat — jadikan publik agar link ini bisa diakses umum. */
+const GITHUB_URL = 'https://github.com/ArahKarya/garap';
+/** Website induk (branding/portfolio PT Arah Karya Sinergi). */
+const ARAHKARYA_URL = 'https://arahkarya.com';
 
 interface Feature {
   icon: typeof CheckSquare;
@@ -107,9 +114,17 @@ export function LandingPage() {
             <BrandLogo className="h-8 w-8" />
             <span className="font-heading text-lg font-bold">{BRANDING.APP_NAME}</span>
           </div>
-          <Button asChild size="sm">
-            <Link to="/login">Masuk</Link>
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button asChild variant="ghost" size="icon" aria-label="GitHub (open source)">
+              <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+                <Github className="h-4 w-4" />
+              </a>
+            </Button>
+            <ThemeToggle />
+            <Button asChild size="sm">
+              <Link to="/login">Masuk</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -229,15 +244,32 @@ export function LandingPage() {
             <BrandLogo className="h-6 w-6" />
             <span className="font-heading text-sm font-semibold">{BRANDING.APP_NAME}</span>
           </div>
-          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground">
               Ketentuan Layanan
             </Link>
             <Link to="/privacy" className="hover:text-foreground">
               Kebijakan Privasi
             </Link>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
           </nav>
-          <p className="text-xs text-muted-foreground/70">{BRANDING.COPYRIGHT}</p>
+          <a
+            href={ARAHKARYA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+            title="Kunjungi arahkarya.com"
+          >
+            {BRANDING.COPYRIGHT}
+          </a>
         </div>
       </footer>
     </div>
