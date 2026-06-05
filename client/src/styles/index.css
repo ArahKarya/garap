@@ -289,6 +289,87 @@
   }
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   Landing page motion — entrance, scroll-reveal, and ambient orb animations.
+   Subtle & elegant; fully disabled under prefers-reduced-motion (see below).
+   ──────────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  @keyframes garap-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes garap-float {
+    0%, 100% {
+      transform: translate(-50%, 0) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -18px) scale(1.06);
+    }
+  }
+
+  @keyframes garap-breathe {
+    0%, 100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(1.12);
+    }
+  }
+
+  /* Hero entrance — staggered via inline animation-delay */
+  .animate-fade-up {
+    opacity: 0;
+    animation: garap-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Ambient decorative orbs */
+  .animate-float {
+    animation: garap-float 8s ease-in-out infinite;
+  }
+  .animate-breathe {
+    animation: garap-breathe 7s ease-in-out infinite;
+  }
+
+  /* Scroll-reveal: hidden until IntersectionObserver toggles .is-visible */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Respect reduced-motion: show everything instantly, no movement */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-float,
+    .animate-breathe {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+}
+
 @media print {
   @page {
     size: A4;
