@@ -9,7 +9,7 @@ import type {
 import { buildPagination, toSkipTake } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
-import { assertWithinQuota } from '../../lib/quota.js';
+import { assertWithinQuota, assertStorageQuota } from '../../lib/quota.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../lib/logger.js';
 import { isPublicHttpUrl } from '../../lib/url-safety.js';
@@ -132,6 +132,7 @@ export async function createFromUpload(
   scope: OwnerScope,
 ) {
   await assertWithinQuota('documents', scope.ownerId);
+  await assertStorageQuota(scope.ownerId, upload.size);
   await ensureWorkspaceOwnership(meta.workspaceId, scope);
   await ensureProjectOwnership(meta.projectId, meta.workspaceId, scope);
   const fileUpload = await prisma.fileUpload.create({

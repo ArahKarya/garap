@@ -1,5 +1,7 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/auth';
+
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
@@ -19,7 +21,8 @@ let refreshing: Promise<string | null> | null = null;
 api.interceptors.response.use(
   (r) => r,
   async (error: AxiosError) => {
-    const original = error.config as any;
+    const original = error.config as RetryableConfig | undefined;
+    if (!original) return Promise.reject(error);
     const status = error.response?.status;
 
     if (status === 401 && !original._retry && original.url !== '/auth/refresh') {

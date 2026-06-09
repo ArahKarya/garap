@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
 import { useActiveWorkspace } from '@/hooks/useWorkspaces';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 

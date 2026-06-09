@@ -27,3 +27,6 @@ export const ValidationError = (message: string, details?: unknown) =>
 /** Batas paket (kuota) tercapai — sinyal untuk upgrade. HTTP 402. */
 export const QuotaError = (message: string, details?: unknown) =>
   new AppError('QUOTA_EXCEEDED', message, 402, details);
+
+/** Kesalahan internal server (mis. data seed/role hilang). HTTP 500. */
+export const InternalError = (message: string) => new AppError('INTERNAL', message, 500);

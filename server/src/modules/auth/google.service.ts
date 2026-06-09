@@ -1,9 +1,10 @@
 import crypto from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
+import type { Prisma } from '@prisma/client';
 import { ROLES } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import { env, allowedEmails } from '../../config/env.js';
-import { ForbiddenError, UnauthorizedError } from '../../lib/errors.js';
+import { ForbiddenError, UnauthorizedError, InternalError } from '../../lib/errors.js';
 import {
   parseDurationToSeconds,
   signAccessToken,
@@ -159,26 +160,37 @@ export async function loginWithGoogle(
     });
     userId = updated.id;
   } else {
-    const isFirstUser = (await prisma.user.count()) === 0;
-    const created = await prisma.user.create({
-      data: {
-        email: profile.email,
-        name: profile.name,
-        googleSub: profile.sub,
-        avatarUrl: profile.picture,
-        isActive: true,
+    // Penentuan "user pertama → SUPER_ADMIN", create user, assign role, dan create
+    // subscription dibungkus satu transaksi Serializable. Dua signup bersamaan yang
+    // sama-sama melihat tabel kosong akan saling konflik → hanya satu jadi SUPER_ADMIN;
+    // dan semua langkah commit bersama (tak ada user tanpa role/subscription).
+    const created = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        const isFirstUser = (await tx.user.count()) === 0;
+        const newUser = await tx.user.create({
+          data: {
+            email: profile.email,
+            name: profile.name,
+            googleSub: profile.sub,
+            avatarUrl: profile.picture,
+            isActive: true,
+          },
+        });
+        const roleName = isFirstUser ? ROLES.SUPER_ADMIN : ROLES.MEMBER;
+        const role = await tx.role.findUnique({ where: { name: roleName } });
+        if (!role) {
+          throw InternalError(`Role "${roleName}" tidak ditemukan — jalankan seed terlebih dahulu`);
+        }
+        await tx.userRole.create({
+          data: { userId: newUser.id, roleId: role.id },
+        });
+        // Langganan default (FREE/ACTIVE) — pondasi billing B2C.
+        await tx.subscription.create({ data: { userId: newUser.id } });
+        return newUser;
       },
-    });
+      { isolationLevel: 'Serializable' },
+    );
     userId = created.id;
-    const roleName = isFirstUser ? ROLES.SUPER_ADMIN : ROLES.MEMBER;
-    const role = await prisma.role.findUnique({ where: { name: roleName } });
-    if (role) {
-      await prisma.userRole.create({
-        data: { userId: created.id, roleId: role.id },
-      });
-    }
-    // Langganan default (FREE/ACTIVE) — pondasi billing B2C.
-    await prisma.subscription.create({ data: { userId: created.id } });
   }
 
   const authUser = await buildAuthUser(userId);

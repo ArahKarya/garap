@@ -51,7 +51,7 @@ export async function get(id: string) {
 export async function create(input: CreateUserInput) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) throw ConflictError('Email sudah terdaftar');
-  const passwordHash = await bcrypt.hash(input.password, 10);
+  const passwordHash = await bcrypt.hash(input.password, 12);
 
   return prisma.user.create({
     data: {
@@ -95,7 +95,7 @@ export async function remove(id: string) {
 }
 
 export async function resetPassword(id: string, newPassword: string) {
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({ where: { id }, data: { passwordHash } });
   await prisma.refreshToken.updateMany({
     where: { userId: id, revokedAt: null },

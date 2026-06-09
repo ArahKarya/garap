@@ -371,15 +371,6 @@ export function TasksPage() {
     });
   };
 
-  const selectAll = (ids: string[]): void => {
-    setSelectedIds((prev) => {
-      // Toggle: if everything visible is already selected, clear; else select all visible.
-      const allSelected = ids.every((id) => prev.has(id));
-      if (allSelected) return new Set();
-      return new Set(ids);
-    });
-  };
-
   const openCreate = (parentId?: string): void => {
     setEditingId(null);
     reset({

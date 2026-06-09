@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Sparkles, Loader2, Copy } from 'lucide-react';
+import { Check, Sparkles, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -137,6 +137,11 @@ export function BillingPage() {
       </Card>
 
       {/* Katalog paket */}
+      {plansQuery.isError && (
+        <p className="flex items-center gap-2 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4" /> Gagal memuat katalog paket.
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         {plansQuery.isLoading &&
           Array.from({ length: 2 }).map((_, i) => (
@@ -201,7 +206,7 @@ export function BillingPage() {
 
       {meQuery.isError && (
         <p className="flex items-center gap-2 text-sm text-destructive">
-          <Loader2 className="h-4 w-4" /> Gagal memuat data billing.
+          <AlertCircle className="h-4 w-4" /> Gagal memuat data billing.
         </p>
       )}
 

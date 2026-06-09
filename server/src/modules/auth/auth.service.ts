@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
+import type { Prisma } from '@prisma/client';
 import { ROLES, type AuthTokens, type AuthUser, type LoginInput, type RegisterInput } from '@garap/shared';
 import { prisma } from '../../lib/prisma.js';
 import {
@@ -8,7 +9,7 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../../lib/jwt.js';
-import { UnauthorizedError, ConflictError, ForbiddenError } from '../../lib/errors.js';
+import { UnauthorizedError, ConflictError, ForbiddenError, InternalError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
 import { recordAudit } from '../../middleware/audit.js';
 
@@ -112,18 +113,31 @@ export async function register(input: RegisterInput, ip: string | null, userAgen
     throw ConflictError('Email sudah terdaftar. Silakan masuk.');
   }
 
-  const isFirstUser = (await prisma.user.count()) === 0;
-  const passwordHash = await bcrypt.hash(input.password, 10);
-  const user = await prisma.user.create({
-    data: { email, name: input.name.trim(), passwordHash, isActive: true },
-  });
+  const passwordHash = await bcrypt.hash(input.password, 12);
 
-  const roleName = isFirstUser ? ROLES.SUPER_ADMIN : ROLES.MEMBER;
-  const role = await prisma.role.findUnique({ where: { name: roleName } });
-  if (role) {
-    await prisma.userRole.create({ data: { userId: user.id, roleId: role.id } });
-  }
-  await prisma.subscription.create({ data: { userId: user.id } });
+  // Bungkus penentuan "user pertama → SUPER_ADMIN", create user, assign role, dan
+  // create subscription dalam satu transaksi Serializable. Dua signup bersamaan
+  // yang sama-sama melihat tabel kosong akan saling konflik → hanya satu yang lolos
+  // jadi SUPER_ADMIN; dan semua langkah commit bersama (tak ada user tanpa role/sub).
+  const user = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const isFirstUser = (await tx.user.count()) === 0;
+      const created = await tx.user.create({
+        data: { email, name: input.name.trim(), passwordHash, isActive: true },
+      });
+
+      const roleName = isFirstUser ? ROLES.SUPER_ADMIN : ROLES.MEMBER;
+      const role = await tx.role.findUnique({ where: { name: roleName } });
+      if (!role) {
+        throw InternalError(`Role "${roleName}" tidak ditemukan — jalankan seed terlebih dahulu`);
+      }
+      await tx.userRole.create({ data: { userId: created.id, roleId: role.id } });
+      await tx.subscription.create({ data: { userId: created.id } });
+
+      return created;
+    },
+    { isolationLevel: 'Serializable' },
+  );
 
   const authUser = await buildAuthUser(user.id);
   const tokens = await issueTokens(authUser, ip);
@@ -184,7 +198,7 @@ export async function changePassword(
   }
   const ok = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!ok) throw UnauthorizedError('Password saat ini salah');
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
   await prisma.refreshToken.updateMany({
     where: { userId, revokedAt: null },
