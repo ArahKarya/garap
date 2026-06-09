@@ -64,6 +64,9 @@ services:
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://garap.arahkarya.com/api/auth/google/callback}
       PUBLIC_SIGNUP: ${PUBLIC_SIGNUP:-false}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Garap <no-reply@arahkarya.com>}
+      REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-false}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@garap.local}
       # Leave blank to skip local-admin seed; set to ≥12 chars to enable.
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}

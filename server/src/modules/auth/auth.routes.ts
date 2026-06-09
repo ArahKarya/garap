@@ -7,12 +7,15 @@ import {
   loginSchema,
   registerSchema,
   refreshTokenSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
 } from '@garap/shared';
 import { validate, getValidated } from '../../middleware/validate.js';
 import { authenticate, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../lib/logger.js';
 import * as authService from './auth.service.js';
+import * as verificationService from './verification.service.js';
 import * as googleService from './google.service.js';
 import { issueState, verifyState } from './oauth-state.js';
 
@@ -139,6 +142,39 @@ authRouter.post('/register', credentialLimiter, validate(registerSchema), async 
     next(err);
   }
 });
+
+// Verifikasi email (publik). User membuka link dari email → SPA POST token ke sini.
+authRouter.post(
+  '/verify-email',
+  credentialLimiter,
+  validate(verifyEmailSchema),
+  async (req, res, next) => {
+    try {
+      const { token } = getValidated<import('@garap/shared').VerifyEmailInput>(req);
+      await verificationService.verifyEmail(token);
+      res.json(ok({ verified: true }));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// Kirim ulang email verifikasi (publik). Respons SELALU generik (anti-enumeration):
+// tidak membocorkan apakah email terdaftar / sudah verified / akun Google-only.
+authRouter.post(
+  '/resend-verification',
+  credentialLimiter,
+  validate(resendVerificationSchema),
+  async (req, res, next) => {
+    try {
+      const { email } = getValidated<import('@garap/shared').ResendVerificationInput>(req);
+      await verificationService.resendVerification(email);
+      res.json(ok({ sent: true }));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 authRouter.post('/refresh', refreshLimiter, validate(refreshTokenSchema), async (req, res, next) => {
   try {

@@ -45,6 +45,20 @@ const envSchema = z.object({
   // Comma-separated allowlist — dipakai saat PUBLIC_SIGNUP=false. Boleh kosong.
   ALLOWED_EMAILS: z.string().default(''),
 
+  // ── Email (verifikasi pendaftaran email/password) ──────────────────────
+  // Resend API key. Kosong = mode fallback: email TIDAK dikirim, link verifikasi
+  // di-log ke server (untuk dev/sebelum provider siap).
+  RESEND_API_KEY: z.string().default(''),
+  // Alamat pengirim (butuh domain terverifikasi di Resend).
+  EMAIL_FROM: z.string().default('Garap <no-reply@arahkarya.com>'),
+  // Wajibkan verifikasi email sebelum boleh login (jalur email/password).
+  // Default false → AMAN: tak memblokir signup walau email belum aktif.
+  // Flip ke true SETELAH RESEND_API_KEY terisi & domain terverifikasi.
+  REQUIRE_EMAIL_VERIFICATION: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === '1'),
+
   UPLOAD_DIR: z.string().default('./uploads'),
   UPLOAD_MAX_SIZE_MB: z.coerce.number().default(50),
 

@@ -11,7 +11,19 @@ import {
 } from '../../lib/jwt.js';
 import { UnauthorizedError, ConflictError, ForbiddenError, InternalError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
+import { logger } from '../../lib/logger.js';
 import { recordAudit } from '../../middleware/audit.js';
+import { createAndSendVerification } from './verification.service.js';
+
+/**
+ * Hasil register. Bentuk berbeda tergantung REQUIRE_EMAIL_VERIFICATION:
+ *  - false → auto-login: { user, tokens, requiresVerification: false }
+ *  - true  → tanpa login: { requiresVerification: true, email }
+ * Client mengandalkan flag `requiresVerification` untuk menentukan UX berikutnya.
+ */
+export type RegisterResult =
+  | { requiresVerification: false; user: AuthUser; tokens: AuthTokens }
+  | { requiresVerification: true; email: string };
 
 const hashRefreshToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
@@ -82,6 +94,12 @@ export async function login(input: LoginInput, ip: string | null, userAgent: str
     throw UnauthorizedError('Email atau password salah');
   }
 
+  // Gating verifikasi email (jalur email/password). User Google (tanpa passwordHash)
+  // dan user yang sudah verified tidak terpengaruh. Cek SEBELUM issue tokens.
+  if (env.REQUIRE_EMAIL_VERIFICATION && user.passwordHash && !user.emailVerifiedAt) {
+    throw ForbiddenError('Email belum diverifikasi. Cek inbox atau kirim ulang.');
+  }
+
   const authUser = await buildAuthUser(user.id);
   const tokens = await issueTokens(authUser, ip);
 
@@ -103,7 +121,11 @@ export async function login(input: LoginInput, ip: string | null, userAgent: str
  * User pertama di sistem = SUPER_ADMIN (platform owner); selebihnya = MEMBER +
  * langganan FREE. Catatan: verifikasi email belum ada (TODO sebelum skala besar).
  */
-export async function register(input: RegisterInput, ip: string | null, userAgent: string | null) {
+export async function register(
+  input: RegisterInput,
+  ip: string | null,
+  userAgent: string | null,
+): Promise<RegisterResult> {
   if (!env.PUBLIC_SIGNUP) {
     throw ForbiddenError('Pendaftaran sedang ditutup.');
   }
@@ -139,9 +161,6 @@ export async function register(input: RegisterInput, ip: string | null, userAgen
     { isolationLevel: 'Serializable' },
   );
 
-  const authUser = await buildAuthUser(user.id);
-  const tokens = await issueTokens(authUser, ip);
-
   await recordAudit({
     userId: user.id,
     userEmail: user.email,
@@ -152,7 +171,25 @@ export async function register(input: RegisterInput, ip: string | null, userAgen
     diff: null,
   });
 
-  return { user: authUser, tokens };
+  // Kirim email verifikasi DI LUAR transaksi create-user agar kegagalan pengiriman
+  // email tak menggagalkan pembuatan akun. Bungkus try/catch — error email di-log
+  // saja, register tetap sukses (di mode fallback, link ter-log oleh sendEmail).
+  try {
+    await createAndSendVerification({ id: user.id, email: user.email, name: user.name });
+  } catch (err: unknown) {
+    logger.error({ err, userId: user.id }, '[register] gagal mengirim email verifikasi');
+  }
+
+  // Saat verifikasi diwajibkan, JANGAN auto-login: client harus menunggu user
+  // klik link verifikasi sebelum bisa login.
+  if (env.REQUIRE_EMAIL_VERIFICATION) {
+    return { requiresVerification: true, email: user.email };
+  }
+
+  const authUser = await buildAuthUser(user.id);
+  const tokens = await issueTokens(authUser, ip);
+
+  return { requiresVerification: false, user: authUser, tokens };
 }
 
 export async function refresh(refreshToken: string) {

@@ -37,6 +37,9 @@ const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ defa
 const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })));
 const TermsPage = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })));
+const VerifyEmailPage = lazy(() =>
+  import('./pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })),
+);
 
 /**
  * Root path `/`: public landing for guests, but logged-in users are sent
@@ -82,6 +85,14 @@ export function App() {
         element={
           <Suspense fallback={<PageFallback />}>
             <PrivacyPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/verify-email"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <VerifyEmailPage />
           </Suspense>
         }
       />

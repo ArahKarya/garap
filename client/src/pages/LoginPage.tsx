@@ -23,6 +23,7 @@ import {
   Sparkles,
   Eye,
   EyeOff,
+  MailCheck,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -36,6 +37,11 @@ interface LoginResponse {
   user: { id: string; email: string; name: string; roles: string[]; permissions: string[] };
   tokens: { accessToken: string; refreshToken: string; expiresIn: number };
 }
+
+/** Hasil register: auto-login (perilaku lama) atau wajib verifikasi email dulu. */
+type RegisterResponse =
+  | ({ requiresVerification?: false } & LoginResponse)
+  | { requiresVerification: true; email: string };
 
 interface LocationState {
   from?: { pathname?: string };
@@ -139,6 +145,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const completeLogin = (data: LoginResponse): void => {
@@ -239,13 +246,38 @@ export function LoginPage() {
   const onRegisterSubmit = async (input: RegisterInput): Promise<void> => {
     setLoading(true);
     try {
-      const res = await api.post<{ data: LoginResponse }>('/auth/register', input);
-      completeLogin(res.data.data);
+      const res = await api.post<{ data: RegisterResponse }>('/auth/register', input);
+      const data = res.data.data;
+      if (data.requiresVerification) {
+        // Tidak auto-login — tampilkan state "cek email".
+        setPendingEmail(data.email);
+      } else {
+        completeLogin(data);
+      }
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
+  };
+
+  const onResendVerification = async (): Promise<void> => {
+    if (!pendingEmail) return;
+    setLoading(true);
+    try {
+      await api.post('/auth/resend-verification', { email: pendingEmail });
+      toast.success('Email verifikasi telah dikirim ulang.');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const backToLogin = (): void => {
+    setPendingEmail(null);
+    setMode('login');
+    setShowPassword(false);
   };
 
   const isRegister = mode === 'register';
@@ -273,6 +305,15 @@ export function LoginPage() {
             <p className="text-xs text-muted-foreground">{BRANDING.TAGLINE}</p>
           </div>
 
+          {pendingEmail ? (
+            <CheckEmailPanel
+              email={pendingEmail}
+              loading={loading}
+              onResend={onResendVerification}
+              onBack={backToLogin}
+            />
+          ) : (
+          <>
           <div className="space-y-1 mb-6">
             <h2 className="font-heading text-2xl font-semibold tracking-tight">
               {isRegister ? 'Buat akun Garap' : 'Selamat datang'}
@@ -457,11 +498,60 @@ export function LoginPage() {
               </button>
             </p>
           </div>
+          </>
+          )}
 
           <p className="mt-8 text-center text-[10px] text-muted-foreground/60">
             {BRANDING.COPYRIGHT}
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Check-email panel — ditampilkan setelah register bila server meminta
+// verifikasi email (requiresVerification: true). User TIDAK auto-login.
+// ───────────────────────────────────────────────────────────────────────────
+
+interface CheckEmailPanelProps {
+  email: string;
+  loading: boolean;
+  onResend: () => void;
+  onBack: () => void;
+}
+
+function CheckEmailPanel({ email, loading, onResend, onBack }: CheckEmailPanelProps) {
+  return (
+    <div className="space-y-5 text-center">
+      <div className="flex justify-center">
+        <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <MailCheck className="h-7 w-7" />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <h2 className="font-heading text-2xl font-semibold tracking-tight">Cek email kamu</h2>
+        <p className="text-sm text-muted-foreground">
+          Kami telah mengirim link verifikasi ke{' '}
+          <span className="font-medium text-foreground">{email}</span>. Klik link itu untuk
+          mengaktifkan akun.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full h-10"
+          onClick={onResend}
+          disabled={loading}
+        >
+          {loading && <Loader2 className="animate-spin" />}
+          {loading ? 'Mengirim…' : 'Kirim ulang email'}
+        </Button>
+        <Button type="button" variant="ghost" className="w-full h-10" onClick={onBack}>
+          Kembali ke Masuk
+        </Button>
       </div>
     </div>
   );
