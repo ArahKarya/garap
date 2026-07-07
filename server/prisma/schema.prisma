@@ -1,7 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
-  // Native = host (RPi5 dev); musl-arm64-openssl-3.0.x = Alpine 3.20+ container.
-  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+  // Native = host dev; musl-arm64 = Alpine container di RPi5; musl (x64) = Alpine di arah-pc.
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
