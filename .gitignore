@@ -59,3 +59,7 @@ dump.rdb
 .env.bak*
 *.bak.panggon
 *.dump
+
+# local ops (jangan commit)
+.kanban-briefs/
+.admin-cred.txt
