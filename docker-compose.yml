@@ -98,12 +98,12 @@ services:
       ALLOWED_EMAILS: ${ALLOWED_EMAILS}
     command: ['node', 'server/dist/worker.js']
 
-# Volume fisik dipertahankan dari project lama (panggon-mikir_*) demi
-# kontinuitas data saat rename project → garap.
+# Volume garap_* (rebrand total 2026-07-07; volume lama panggon-mikir_* hanya
+# ada di deployment RPi5 lama — migrasi manual bila data lama dibutuhkan).
 volumes:
   postgres_data:
-    name: panggon-mikir_postgres_data
+    name: garap_postgres_data
   redis_data:
-    name: panggon-mikir_redis_data
+    name: garap_redis_data
   app_uploads:
-    name: panggon-mikir_app_uploads
+    name: garap_app_uploads

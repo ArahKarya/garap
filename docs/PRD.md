@@ -1,4 +1,4 @@
-# PRD — Panggon Mikir v1.0
+# PRD — Garap v1.0
 
 **Pemilik**: Yayang Setya Nugroho
 **Tanggal**: 2026-04-28 (rev 2026-05-03)
@@ -9,7 +9,7 @@ Phase 3 sebagian (calendar, share-target, weekly review worker, link health).
 
 Aplikasi *second brain* personal yang menyatukan **task, project, link,
 dokumen, dan note** Yayang dalam satu tempat. Akses via web (RPi5 + domain
-`panggonmikir.arahkarya.com`), login Google.
+`garap.arahkarya.com`), login Google.
 
 ## 2. Why
 
@@ -18,7 +18,7 @@ Yayang punya banyak channel tempat informasi tersebar:
 - File penting tersimpan di Google Drive, GitHub, Notion, Figma
 - Note ad-hoc bertebaran di mana-mana
 
-Panggon Mikir = pusat **manajemen pekerjaan personal** — bukan untuk
+Garap = pusat **manajemen pekerjaan personal** — bukan untuk
 menggantikan app-app produksi tersebut, tapi sebagai *index* dan *workspace*
 yang merangkum semuanya.
 
@@ -30,7 +30,7 @@ yang merangkum semuanya.
 | Mode | Standalone (tidak terhubung ke app lain) |
 | Auth | Google OAuth + email allowlist |
 | Deploy | RPi5 (sudah host Keuangan PMD, DPA ERP, Simple ERP, MES) |
-| Domain | `panggonmikir.arahkarya.com` |
+| Domain | `garap.arahkarya.com` |
 
 ## 4. Scope per Phase
 
@@ -169,5 +169,5 @@ document:read|write|delete
 - [ ] Search global menemukan entity dari satu kotak
 - [ ] Dashboard menampilkan today/upcoming/overdue
 - [ ] Trash bisa restore + purge
-- [x] Deploy di RPi5, public via Cloudflare Tunnel `panggonmikir.arahkarya.com`
+- [x] Deploy di RPi5, public via Cloudflare Tunnel `garap.arahkarya.com`
 - [ ] Coverage test backend ≥80% untuk service layer

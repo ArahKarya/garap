@@ -4,9 +4,11 @@ Guidance untuk AI assistant (Claude Code) saat bekerja di codebase ini.
 
 > **Renamed 2026-06-04:** sebelumnya **Panggon Mikir** (folder `Panggon-Mikir`, domain
 > `panggonmikir.arahkarya.com`, package `@panggonmikir/*`, DB `panggonmikir_db`). Sekarang
-> **Garap** — folder `/home/yay/ArahKarya/Garap`, repo `ArahKarya/garap`, domain
-> `garap.arahkarya.com`, package `@garap/*`, DB `garap_db`/role `garap`. Volume Docker tetap
-> bernama `panggon-mikir_*` (dipertahankan via `name:` di compose demi data continuity).
+> **Garap** — folder `/home/arah/apps/garap`, repo `ArahKarya/garap`, domain
+> `garap.arahkarya.com`, package `@garap/*`, DB `garap_db`/role `garap`.
+> **Update 2026-07-07 (rebrand total):** volume Docker juga di-rename ke `garap_*`
+> (deploy fresh di PC arah-pc; volume lama `panggon-mikir_*` hanya ada di RPi5 — kalau
+> data lama dibutuhkan, migrasi manual via dump/restore).
 
 ## Apa itu Garap
 

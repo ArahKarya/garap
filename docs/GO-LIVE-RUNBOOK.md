@@ -22,7 +22,7 @@ Tanpa ini, login Google di `garap.arahkarya.com` ditolak (origin domain lama). I
    ```
    https://garap.arahkarya.com/api/auth/google/callback
    ```
-6. (Boleh hapus entri lama `panggonmikir.arahkarya.com` setelah yakin.)
+6. (Boleh hapus entri lama `garap.arahkarya.com` setelah yakin.)
 7. **Save**. Propagasi 5 menit–beberapa jam.
 8. **OAuth consent screen** → pastikan **Publishing status = In production** (bukan Testing),
    else hanya test-user yang bisa login. Jika masih "Testing", klik **Publish app**.
@@ -106,7 +106,7 @@ Dilakukan SETELAH login Google jalan, supaya kamu tak terkunci saat sesi ke-rese
 
 - [ ] Langkah 1 (OAuth) selesai + login Google diuji
 - [ ] Secret dirotasi (Langkah 5)
-- [ ] Akun super-admin nyasar `admin@panggonmikir.local` dihapus/diganti
+- [ ] Akun super-admin nyasar `admin@garap.local` dihapus/diganti
 - [ ] Provider pembayaran terpasang + diuji sandbox (Langkah 3)
 - [ ] Infra produksi siap (Langkah 4) bila target banyak user
 - [ ] ToS & Privacy direview profesional (saat ini template)

@@ -1,10 +1,10 @@
-# Panggon Mikir
+# Garap
 
 > *Tempat berpikir, mengelola, dan menyimpan.*
 
 Aplikasi *second brain* personal — task, project, dokumen, link, dan note dalam
 satu tempat. Solo-user, deploy di RPi5, akses lewat
-`panggonmikir.arahkarya.com`.
+`garap.arahkarya.com`.
 
 Dibangun di atas **[ArahKarya Framework](https://github.com/ArahKarya/ArahKarya-Frameworks)**
 (React + Express + Prisma + PostgreSQL + BullMQ).
@@ -52,7 +52,7 @@ pnpm install
 #    Buat OAuth 2.0 Client (Web application)
 #    Authorized redirect URIs:
 #      - http://localhost:3007/api/auth/google/callback
-#      - https://panggonmikir.arahkarya.com/api/auth/google/callback
+#      - https://garap.arahkarya.com/api/auth/google/callback
 
 # 3. Copy & isi env
 cp .env.docker.example .env
@@ -62,9 +62,9 @@ nano .env
 #   - JWT_ACCESS_SECRET, JWT_REFRESH_SECRET (openssl rand -base64 48)
 
 # 4. Migrate & seed
-pnpm --filter @panggonmikir/server prisma:generate
-pnpm --filter @panggonmikir/server db:migrate:dev
-pnpm --filter @panggonmikir/server db:seed
+pnpm --filter @garap/server prisma:generate
+pnpm --filter @garap/server db:migrate:dev
+pnpm --filter @garap/server db:seed
 
 # 5. Run dev
 pnpm dev
@@ -87,7 +87,7 @@ docker compose logs -f app
 
 App accessible:
 - `http://localhost:3007` — direct
-- `https://panggonmikir.arahkarya.com` — public via Cloudflare Tunnel
+- `https://garap.arahkarya.com` — public via Cloudflare Tunnel
   (cloudflared needs ingress rule for the hostname; lihat
   [docs/DEPLOY.md](./docs/DEPLOY.md))
 
@@ -126,11 +126,10 @@ Login email/password (`POST /api/auth/login`) tetap ada sebagai fallback.
 App branding di-control via `BRANDING` constant
 (`packages/shared/src/constants/index.ts`):
 
-- `APP_NAME` = "Panggon Mikir"
-- `COPYRIGHT` = "© Panggon Mikir — Built on ArahKarya by PT Arah Karya Sinergi"
+- `APP_NAME` = "Garap"
+- `COPYRIGHT` = "© Garap — Built on ArahKarya by PT Arah Karya Sinergi"
 
-Logo & favicon: replace files di `client/public/icons/` dengan asset Panggon
-Mikir saat sudah disiapkan.
+Logo & favicon: sudah pakai aset Garap sendiri di `client/public/icons/`.
 
 ## Scripts
 

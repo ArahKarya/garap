@@ -22,7 +22,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 # from docker-compose.yml so the client bundle has the Google Client ID,
 # API URL, etc. Keep public values only — never the JWT or OAuth secret.
 ARG VITE_API_URL=/api
-ARG VITE_APP_NAME="Panggon Mikir"
+ARG VITE_APP_NAME="Garap"
 ARG VITE_GOOGLE_CLIENT_ID=""
 ENV VITE_API_URL=$VITE_API_URL \
     VITE_APP_NAME=$VITE_APP_NAME \

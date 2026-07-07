@@ -44,9 +44,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Shared build
-        run: pnpm --filter @panggonmikir/shared build
+        run: pnpm --filter @garap/shared build
       - name: Prisma generate
-        run: pnpm --filter @panggonmikir/server prisma:generate
+        run: pnpm --filter @garap/server prisma:generate
         env:
           DATABASE_URL: postgresql://arahkarya:arahkarya@localhost:5432/arahkarya_test?schema=public
       - name: Typecheck

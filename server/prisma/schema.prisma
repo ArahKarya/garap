@@ -204,7 +204,7 @@ model FileUpload {
   @@map("file_uploads")
 }
 
-// ─── Panggon Mikir domain models ───────────────────────────────────────────
+// ─── Garap domain models ───────────────────────────────────────────
 
 model Workspace {
   id          String    @id @default(cuid())

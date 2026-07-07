@@ -1,6 +1,6 @@
-# Deployment — Panggon Mikir
+# Deployment — Garap
 
-App live di **https://panggonmikir.arahkarya.com** lewat Cloudflare Tunnel (bukan
+App live di **https://garap.arahkarya.com** lewat Cloudflare Tunnel (bukan
 nginx + DNS proxy). RPi5 tidak butuh public IP / port forward — `cloudflared`
 buka outbound QUIC ke Cloudflare, lalu Cloudflare route hostname ke tunnel.
 
@@ -11,28 +11,28 @@ Cloudflare edge
   ↓ Cloudflare Tunnel (cloudflared QUIC outbound, 4 koneksi)
 RPi5 cloudflared process (config: ~/.cloudflared/config-arahkarya.yml)
   ↓ ingress rule match by hostname
-127.0.0.1:3007 → panggon-mikir-app container
+127.0.0.1:3007 → garap-app container
 ```
 
 ## Stack
 
 | Komponen | Port | Container | Status |
 |---|---|---|---|
-| Postgres 16 | host 5439 → 5432 | `panggon-mikir-postgres-1` | docker compose service |
-| Redis 7 | host 6380 → 6379 | `panggon-mikir-redis-1` | docker compose service |
-| App (Express + SPA) | host 3007 → 3007 | `panggon-mikir-app-1` | docker compose service |
-| BullMQ Worker | shared image | `panggon-mikir-worker-1` | docker compose service |
+| Postgres 16 | host 5439 → 5432 | `garap-postgres-1` | docker compose service |
+| Redis 7 | host 6380 → 6379 | `garap-redis-1` | docker compose service |
+| App (Express + SPA) | host 3007 → 3007 | `garap-app-1` | docker compose service |
+| BullMQ Worker | shared image | `garap-worker-1` | docker compose service |
 | Cloudflare Tunnel | (no port) | host process `cloudflared` | systemd unit `cloudflared.service` (atau nohup) |
 
 ## First-time deploy
 
 1. **DNS** — di Cloudflare dashboard, zone `arahkarya.com`:
    - Type: `CNAME`
-   - Name: `panggonmikir`
+   - Name: `garap`
    - Target: `<arahkarya-tunnel-uuid>.cfargotunnel.com` (UUID = `c2aca48a-…` untuk tunnel `arahkarya`)
    - Proxy: **Proxied (orange)**
 
-   Atau gunakan `cloudflared tunnel route dns arahkarya panggonmikir.arahkarya.com`
+   Atau gunakan `cloudflared tunnel route dns arahkarya garap.arahkarya.com`
    kalau cert.pem cloudflared sudah bound ke akun yang punya zona arahkarya.com.
 
 2. **Tunnel ingress** — edit `~/.cloudflared/config-arahkarya.yml`, tambah:
@@ -40,22 +40,22 @@ RPi5 cloudflared process (config: ~/.cloudflared/config-arahkarya.yml)
    ```yaml
    ingress:
      # … rules existing …
-     - hostname: panggonmikir.arahkarya.com
+     - hostname: garap.arahkarya.com
        service: http://127.0.0.1:3007
      - service: http_status:404   # catch-all wajib di akhir
    ```
 
    Restart tunnel: `pkill -f "cloudflared.*config-arahkarya" && nohup cloudflared tunnel --config ~/.cloudflared/config-arahkarya.yml run arahkarya > /tmp/cloudflared-arahkarya.log 2>&1 & disown`
 
-3. **App** — di repo `/home/yay/ArahKarya/Panggon-Mikir`:
+3. **App** — di repo `/home/arah/apps/garap`:
 
    ```bash
    cp .env.docker.example .env
    nano .env
    # isi: JWT_ACCESS_SECRET, JWT_REFRESH_SECRET (openssl rand -base64 48),
    #      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ALLOWED_EMAILS
-   #      APP_URL=https://panggonmikir.arahkarya.com
-   #      CORS_ORIGIN=https://panggonmikir.arahkarya.com
+   #      APP_URL=https://garap.arahkarya.com
+   #      CORS_ORIGIN=https://garap.arahkarya.com
 
    ./deploy.sh   # build + up + migrate + seed
    ```
@@ -63,7 +63,7 @@ RPi5 cloudflared process (config: ~/.cloudflared/config-arahkarya.yml)
 ## Health check
 
 ```bash
-curl https://panggonmikir.arahkarya.com/api/health
+curl https://garap.arahkarya.com/api/health
 # → {"success":true,"data":{"status":"healthy","checks":{"db":"ok","redis":"ok"}}}
 ```
 
@@ -78,8 +78,8 @@ git pull
 
 - Google OAuth (primary): tombol di `/login`. Hanya email di `ALLOWED_EMAILS`
   yang lolos. Setup credentials di Google Cloud Console dengan redirect URI
-  `https://panggonmikir.arahkarya.com/api/auth/google/callback`.
-- Email/password fallback: `admin@panggonmikir.local` / `admin123` (rotate via
+  `https://garap.arahkarya.com/api/auth/google/callback`.
+- Email/password fallback: `admin@garap.local` / `admin123` (rotate via
   `/settings` → ganti password).
 
 ## Backup
