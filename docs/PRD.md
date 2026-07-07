@@ -9,7 +9,7 @@ Phase 3 sebagian (calendar, share-target, weekly review worker, link health).
 
 Aplikasi *second brain* personal yang menyatukan **task, project, link,
 dokumen, dan note** Yayang dalam satu tempat. Akses via web (RPi5 + domain
-`garap.arahkarya.com`), login Google.
+`garap.arahkarya.com`), login email/password.
 
 ## 2. Why
 
@@ -28,7 +28,7 @@ yang merangkum semuanya.
 |---|---|
 | Pengguna | 1 (solo: Yayang) |
 | Mode | Standalone (tidak terhubung ke app lain) |
-| Auth | Google OAuth + email allowlist |
+| Auth | Login email/password + email allowlist |
 | Deploy | RPi5 (sudah host Keuangan PMD, DPA ERP, Simple ERP, MES) |
 | Domain | `garap.arahkarya.com` |
 
@@ -132,7 +132,7 @@ Sidebar (mengikuti pola HRIS/skeleton):
 
 ## 8. Non-functional
 
-- **Auth**: Google OAuth saja (allowlist), email/password lokal sebagai fallback dev
+- **Auth**: Login email/password lokal (JWT rotation) + email allowlist. Google OAuth dihapus (2026-07-07).
 - **Performance**: <200ms p95 untuk endpoint list (pagination wajib)
 - **Storage**: max 5GB total upload (Phase 2), enforced di service layer
 - **Backup**: Postgres dump harian via cron (script di `scripts/`)
@@ -163,7 +163,7 @@ document:read|write|delete
 
 ## 11. Success Criteria (Phase 1 ship)
 
-- [ ] Login Google berhasil, hanya email allowlist yang lolos
+- [ ] Login email/password berhasil, hanya email allowlist yang boleh daftar
 - [ ] Bisa CRUD task, project, link, tag dari UI
 - [ ] Paste URL → metadata terisi otomatis (judul, favicon, platform)
 - [ ] Search global menemukan entity dari satu kotak

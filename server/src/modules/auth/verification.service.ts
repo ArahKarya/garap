@@ -120,7 +120,7 @@ export async function verifyEmail(rawToken: string): Promise<void> {
 
 /**
  * Kirim ulang email verifikasi. Anti-enumeration: untuk email yang tak ada,
- * akun Google-only (tanpa passwordHash), atau yang sudah terverifikasi, fungsi
+ * akun tanpa passwordHash, atau yang sudah terverifikasi, fungsi
  * ini RETURN DIAM-DIAM tanpa membocorkan status akun.
  */
 export async function resendVerification(email: string): Promise<void> {
@@ -129,7 +129,7 @@ export async function resendVerification(email: string): Promise<void> {
 
   // Anti-enumeration: jangan beri tahu apakah akun ada / statusnya bagaimana.
   if (!user) return;
-  if (!user.passwordHash) return; // akun Google-only
+  if (!user.passwordHash) return; // akun tanpa password lokal
   if (user.emailVerifiedAt) return; // sudah verified
 
   await createAndSendVerification({ id: user.id, email: user.email, name: user.name });

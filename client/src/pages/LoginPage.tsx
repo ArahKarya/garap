@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,26 +47,6 @@ interface LocationState {
   from?: { pathname?: string };
 }
 
-interface GoogleCredentialResponse {
-  credential: string;
-}
-
-interface GoogleAccountsId {
-  initialize: (config: {
-    client_id: string;
-    callback: (response: GoogleCredentialResponse) => void;
-    auto_select?: boolean;
-    cancel_on_tap_outside?: boolean;
-  }) => void;
-  renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
-}
-
-declare global {
-  interface Window {
-    google?: { accounts: { id: GoogleAccountsId } };
-  }
-}
-
 function getErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'response' in err) {
     const response = (err as { response?: { data?: { error?: { message?: string } } } }).response;
@@ -74,8 +54,6 @@ function getErrorMessage(err: unknown): string {
   }
   return 'Terjadi kesalahan';
 }
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const FEATURES: Array<{ icon: typeof CheckSquare; label: string; desc: string }> = [
   {
@@ -146,7 +124,6 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const completeLogin = (data: LoginResponse): void => {
     setAuth(data.user, data.tokens);
@@ -155,63 +132,6 @@ export function LoginPage() {
     navigate(from, { replace: true });
     toast.success(`Selamat datang, ${data.user.name}`);
   };
-
-  const handleGoogleCredential = async (response: GoogleCredentialResponse): Promise<void> => {
-    setLoading(true);
-    try {
-      const res = await api.post<{ data: LoginResponse }>('/auth/google', {
-        idToken: response.credential,
-      });
-      completeLogin(res.data.data);
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load Google Identity Services script and render the sign-in button.
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-
-    const renderButton = (): void => {
-      if (!window.google || !googleButtonRef.current) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular',
-        logo_alignment: 'left',
-        width: 320,
-      });
-    };
-
-    if (window.google?.accounts) {
-      renderButton();
-      return;
-    }
-
-    const existing = document.querySelector<HTMLScriptElement>('script[src*="gsi/client"]');
-    if (existing) {
-      existing.addEventListener('load', renderButton, { once: true });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = renderButton;
-    document.head.appendChild(script);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const {
     register: registerLoginField,
@@ -320,34 +240,12 @@ export function LoginPage() {
             </h2>
             <p className="text-sm text-muted-foreground">
               {isRegister
-                ? 'Daftar dengan akun Google atau email-mu untuk mulai.'
-                : 'Masuk dengan akun Google atau email-mu untuk lanjut.'}
+                ? 'Daftar dengan email-mu untuk mulai.'
+                : 'Masuk dengan email-mu untuk lanjut.'}
             </p>
           </div>
 
           <div className="space-y-4">
-            {/* Google sign-in */}
-            {GOOGLE_CLIENT_ID ? (
-              <div className="flex justify-center">
-                <div ref={googleButtonRef} />
-              </div>
-            ) : (
-              <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
-                <code>VITE_GOOGLE_CLIENT_ID</code> belum di-set di{' '}
-                <code>client/.env</code> — tombol Google tidak muncul. Pakai email/password
-                di bawah.
-              </div>
-            )}
-
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                atau
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
             {/* Email/password form — login vs register */}
             {isRegister ? (
               <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-3">

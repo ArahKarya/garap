@@ -16,17 +16,6 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export const googleLoginSchema = z
-  .object({
-    idToken: z.string().min(1).optional(),
-    code: z.string().min(1).optional(),
-  })
-  .refine((data) => Boolean(data.idToken) !== Boolean(data.code), {
-    message: 'Salah satu dari idToken atau code wajib diisi (tidak keduanya)',
-  });
-
-export type GoogleLoginInput = z.infer<typeof googleLoginSchema>;
-
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1),

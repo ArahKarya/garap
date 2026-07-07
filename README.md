@@ -27,7 +27,7 @@ Phase 1 — MVP (sedang dibangun).
 | Frontend | React 19 + Vite + Tailwind 4 + TanStack Query + Zustand + shadcn/ui |
 | Backend | Node 20 + Express 5 + Prisma + PostgreSQL 16 |
 | Queue | BullMQ + Redis 7 |
-| Auth | Google OAuth (primary) + JWT rotation fallback |
+| Auth | Login email/password (JWT rotation) |
 | Logging | Pino |
 | Deploy | Docker Compose di RPi5 |
 
@@ -47,26 +47,19 @@ Phase 1 — MVP (sedang dibangun).
 # 1. Install dependencies
 pnpm install
 
-# 2. Siapkan Google OAuth credentials
-#    https://console.cloud.google.com → APIs & Services → Credentials
-#    Buat OAuth 2.0 Client (Web application)
-#    Authorized redirect URIs:
-#      - http://localhost:3007/api/auth/google/callback
-#      - https://garap.arahkarya.com/api/auth/google/callback
-
-# 3. Copy & isi env
+# 2. Copy & isi env
 cp .env.docker.example .env
 nano .env
-#   - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 #   - ALLOWED_EMAILS=yayang.nugroho.s@gmail.com
 #   - JWT_ACCESS_SECRET, JWT_REFRESH_SECRET (openssl rand -base64 48)
+#   - SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD (login pertama)
 
-# 4. Migrate & seed
+# 3. Migrate & seed
 pnpm --filter @garap/server prisma:generate
 pnpm --filter @garap/server db:migrate:dev
 pnpm --filter @garap/server db:seed
 
-# 5. Run dev
+# 4. Run dev
 pnpm dev
 ```
 
@@ -79,7 +72,7 @@ Akses:
 
 ```bash
 cp .env.docker.example .env
-# EDIT .env (Google OAuth + JWT secrets)
+# EDIT .env (ALLOWED_EMAILS + JWT secrets + SEED_ADMIN_*)
 
 ./deploy.sh             # build + up + migrate + seed
 docker compose logs -f app
@@ -107,19 +100,20 @@ User (Yayang)
 
 Semua punya `deletedAt` (soft delete) dan auto-audited.
 
-## Auth — Google OAuth
+## Auth — Email/Password (JWT lokal)
 
-Solo-user, email allowlist via `ALLOWED_EMAILS`. Yang tidak terdaftar → 403.
+Solo-user, email allowlist via `ALLOWED_EMAILS` (saat `PUBLIC_SIGNUP=false`).
+Yang tidak terdaftar → ditolak daftar.
 
 Endpoints:
-- `GET /api/auth/google` — kembalikan URL Google consent screen
-- `POST /api/auth/google` — body `{ idToken }` atau `{ code }`, kembalikan
-  JWT access + refresh token (rotation otomatis tiap refresh)
+- `POST /api/auth/login` — body `{ email, password }`, kembalikan JWT access +
+  refresh token (rotation otomatis tiap refresh)
+- `POST /api/auth/register` — daftar akun baru (gated `PUBLIC_SIGNUP`/`ALLOWED_EMAILS`)
 - `POST /api/auth/refresh` — rotate token
 - `POST /api/auth/logout` — revoke refresh token
 - `GET /api/auth/me` — current user info + permissions
 
-Login email/password (`POST /api/auth/login`) tetap ada sebagai fallback.
+> **Google OAuth dihapus total (2026-07-07)** — hanya login email/password yang tersisa.
 
 ## Branding
 

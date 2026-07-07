@@ -11,8 +11,8 @@ const SECTIONS: LegalSection[] = [
         <p>Kami mengumpulkan data berikut untuk menjalankan Layanan:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong className="text-foreground">Data akun dari Google:</strong> alamat email, nama,
-            dan foto profil (avatar) yang diberikan oleh Google saat Anda masuk.
+            <strong className="text-foreground">Data akun:</strong> alamat email dan nama
+            yang Anda berikan saat mendaftar.
           </li>
           <li>
             <strong className="text-foreground">Konten yang Anda buat:</strong> task, project, note,
@@ -71,9 +71,6 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>Kami hanya membagikan data terbatas kepada penyedia yang mendukung Layanan, yaitu:</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>
-            <strong className="text-foreground">Google:</strong> untuk autentikasi (Google Sign-In).
-          </li>
           <li>
             Penyedia infrastruktur untuk hosting dan pengiriman email notifikasi, bila relevan.
           </li>

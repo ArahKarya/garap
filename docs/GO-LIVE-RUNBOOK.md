@@ -4,6 +4,10 @@
 > yang hanya bisa kamu (owner) lakukan, dengan nilai konkret siap-tempel. Urut sesuai prioritas.
 > Setelah tiap langkah, kabari assistant untuk lanjut bagian teknis yang menyusul.
 
+> **⚠️ USANG (2026-07-07):** Google OAuth sudah DIHAPUS TOTAL dari Garap. Langkah 1
+> (Google OAuth Console) di bawah tidak berlaku lagi — login sekarang hanya
+> email/password. Lewati semua instruksi Google Console.
+
 ---
 
 ## LANGKAH 1 — Google OAuth Console (5 menit, GRATIS) — **paling mendesak**

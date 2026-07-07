@@ -290,8 +290,7 @@ export function SettingsPage() {
             Ganti password lokal
           </Button>
           <p className="text-[11px] text-muted-foreground">
-            Untuk akun yang login lewat Google, password lokal tidak dipakai —
-            password reset cukup di Google Account langsung.
+            Password lokal dipakai untuk login email/password. Ganti berkala demi keamanan akun.
           </p>
         </CardContent>
       </Card>

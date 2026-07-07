@@ -20,7 +20,7 @@ mengelola **task, project, dokumen, link, dan note**. Solo-user, dipakai oleh
 - **Deploy**: RPi5 via Docker Compose, exposed via `cloudflared` tunnel
   (NOT nginx + DNS proxy — nginx exists di RPi5 tapi cuma untuk LAN/localhost).
   Lihat `docs/DEPLOY.md` untuk arsitektur deploy lengkap.
-- **Auth**: Google OAuth (single user, email allowlist)
+- **Auth**: Login email/password (JWT lokal, single user, email allowlist)
 
 Dibangun di atas **ArahKarya Framework** — semua module bawaan (Auth, RBAC, Audit,
 Settings, Notifications, File Upload, Job Queue, Bull Board) dipakai apa adanya.
@@ -70,18 +70,21 @@ plus FK opsional ke Project. Link juga bisa attached ke Task spesifik
 
 ## Auth Flow
 
-Login Google OAuth — endpoint `/api/auth/google`:
+Login email/password (JWT lokal) — endpoint `/api/auth/login`:
 
-1. Client memanggil `GET /api/auth/google` → server kembalikan `url` (Google consent screen).
-2. Setelah user setuju, Google redirect ke `GOOGLE_REDIRECT_URI` dengan `code`.
-3. Client POST `code` (atau `id_token` dari Google Identity Services) ke `POST /api/auth/google`.
-4. Server verifikasi via `google-auth-library`, cek email di `ALLOWED_EMAILS`,
-   upsert user (auto-link Google sub), terbitkan JWT access + refresh token
+1. Client POST `{ email, password }` ke `POST /api/auth/login`.
+2. Server verifikasi password (bcrypt), cek gating verifikasi email bila
+   `REQUIRE_EMAIL_VERIFICATION=true`, lalu terbitkan JWT access + refresh token
    (skema rotation milik skeleton tetap dipakai).
+3. Pendaftaran via `POST /api/auth/register` (aktif saat `PUBLIC_SIGNUP=true`;
+   saat `false` hanya email di `ALLOWED_EMAILS` yang boleh daftar).
 
-Email yang tidak ada di `ALLOWED_EMAILS` → **403 Forbidden**.
+Email yang tidak ada di `ALLOWED_EMAILS` (saat `PUBLIC_SIGNUP=false`) → ditolak.
 
-Login JWT lokal (email/password) tetap tersedia sebagai fallback dev/break-glass.
+> **Google OAuth dihapus total (2026-07-07):** fitur login Google dibuang atas
+> perintah Ndoro ("menyulitkan"). Yang tersisa hanya login email/password.
+
+Login JWT lokal (email/password) adalah satu-satunya jalur autentikasi.
 
 ## Permissions Tambahan
 
@@ -152,7 +155,7 @@ benar-benar berat dan butuh repository abstraction.
 - Pakai PostgreSQL container (5439) di test, **jangan mock DB**
 - Target coverage 80%+ untuk business logic (task recurrence, link metadata
   parsing, tag uniqueness)
-- E2E: Playwright untuk login Google → create task → tag → search
+- E2E: Playwright untuk login email/password → create task → tag → search
 
 ## Branding & Trademark
 
@@ -174,7 +177,7 @@ rounded-square emerald `#10b981`, gaya mirip app Tilik). Master SVG di
 - ❌ Hard delete domain entity (Task/Project/Link/Note/Document) — pakai `deletedAt`
 - ❌ Skip audit log atau RBAC di endpoint mutasi
 - ❌ Duplikat Zod schema antara FE dan BE
-- ❌ Hard-code `ALLOWED_EMAILS`, `GOOGLE_CLIENT_*` — selalu via env
+- ❌ Hard-code `ALLOWED_EMAILS`, JWT secrets — selalu via env
 - ❌ Mock database di integration test
 - ❌ Tabrak port aplikasi lain di RPi5 (3001 Keuangan, 3002 lainnya, dst.)
 
@@ -185,5 +188,5 @@ Sebelum coding besar, baca:
 - `server/src/middleware/` — error, auth, rbac, audit, validate
 - `server/src/lib/errors.ts` — standard error constructors
 - `server/src/services/queue.ts` — cara enqueue job
-- `server/src/modules/auth/google.service.ts` — Google OAuth flow
+- `server/src/modules/auth/auth.service.ts` — login/register/refresh email/password
 - `docs/PRD.md` — product requirement detail

@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { LoginPage } from './pages/LoginPage';
-import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { AppLayout } from './layouts/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuthStore } from './stores/auth';
@@ -68,7 +67,6 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* Public marketing + legal — no auth, outside AppLayout/ProtectedRoute */}
       <Route index element={<RootIndex />} />

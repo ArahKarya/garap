@@ -76,11 +76,12 @@ git pull
 
 ## Login
 
-- Google OAuth (primary): tombol di `/login`. Hanya email di `ALLOWED_EMAILS`
-  yang lolos. Setup credentials di Google Cloud Console dengan redirect URI
-  `https://garap.arahkarya.com/api/auth/google/callback`.
-- Email/password fallback: `admin@garap.local` / `admin123` (rotate via
-  `/settings` → ganti password).
+- Login email/password (satu-satunya jalur): form di `/login`. Saat
+  `PUBLIC_SIGNUP=false`, hanya email di `ALLOWED_EMAILS` yang boleh mendaftar.
+- Admin awal di-seed dari `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`; rotate via
+  `/settings` → ganti password.
+
+> **Google OAuth dihapus total (2026-07-07)** — tak ada lagi setup Google Cloud Console.
 
 ## Backup
 

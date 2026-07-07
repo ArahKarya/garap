@@ -31,8 +31,8 @@ ada pengguna bayar pertama.
 
 - [x] Hapus `.env.bak.panggon` dari repo + perkuat `.gitignore` (DONE 2026-06-04)
 - [ ] **Rotasi semua secret** yang sempat masuk git history: `JWT_ACCESS_SECRET`,
-      `JWT_REFRESH_SECRET`, `POSTGRES_PASSWORD`, `SEED_ADMIN_PASSWORD` (bisa otomatis),
-      `GOOGLE_CLIENT_SECRET` (manual di Google Cloud Console).
+      `JWT_REFRESH_SECRET`, `POSTGRES_PASSWORD`, `SEED_ADMIN_PASSWORD` (bisa otomatis).
+      (Google OAuth dihapus 2026-07-07 — `GOOGLE_CLIENT_SECRET` tak relevan lagi.)
 - [ ] Rate limit per-endpoint: upload dokumen (ketat), search, bulk ops.
 - [ ] Error tracking (Sentry) + uptime monitor.
 

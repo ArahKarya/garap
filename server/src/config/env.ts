@@ -30,12 +30,8 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
-  // Google OAuth — Garap uses Google as primary login provider.
-  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),
-  GOOGLE_REDIRECT_URI: z.string().url().default('http://localhost:3007/api/auth/google/callback'),
   // Signup mode:
-  //  - PUBLIC_SIGNUP=true  → siapa pun dengan email Google terverifikasi boleh daftar (SaaS publik).
+  //  - PUBLIC_SIGNUP=true  → siapa pun dengan email terverifikasi boleh daftar (SaaS publik).
   //  - PUBLIC_SIGNUP=false → hanya email di ALLOWED_EMAILS yang boleh masuk (mode tertutup/privat).
   // Default AMAN: false (tertutup). Flip ke true saat siap go-public.
   PUBLIC_SIGNUP: z

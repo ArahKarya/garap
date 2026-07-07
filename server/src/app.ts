@@ -24,10 +24,8 @@ export function createApp(): Express {
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
-  // CSP + COOP: relax just enough for Google Identity Services. Helmet default
-  // would block accounts.google.com; default COOP `same-origin` also blocks
-  // window.opener.postMessage from the GIS popup back to our main tab,
-  // resulting in a blank Google popup that never closes.
+  // Content Security Policy (production). Login is local email/password only —
+  // no third-party auth origins needed.
   app.use(
     helmet({
       contentSecurityPolicy: isProduction
@@ -38,23 +36,18 @@ export function createApp(): Express {
               fontSrc: ["'self'", 'https:', 'data:'],
               formAction: ["'self'"],
               frameAncestors: ["'self'"],
-              // Google Sign-In popup is rendered in an iframe.
-              frameSrc: ["'self'", 'https://accounts.google.com'],
-              imgSrc: ["'self'", 'data:', 'https://*.googleusercontent.com', 'https:'],
+              frameSrc: ["'self'"],
+              imgSrc: ["'self'", 'data:', 'https:'],
               objectSrc: ["'none'"],
-              // Google GIS script + supporting JS.
-              scriptSrc: ["'self'", 'https://accounts.google.com', 'https://apis.google.com'],
+              scriptSrc: ["'self'"],
               scriptSrcAttr: ["'none'"],
               styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
-              // Allow XHR to Google for token exchange + favicon proxies.
-              connectSrc: ["'self'", 'https://accounts.google.com', 'https:'],
+              // Allow XHR to self + favicon proxies over https.
+              connectSrc: ["'self'", 'https:'],
               upgradeInsecureRequests: [],
             },
           }
         : false,
-      // Allow popups (GIS) to talk back to the opener via postMessage.
-      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-      // Default 'require-corp' breaks loading cross-origin Google iframe.
       crossOriginEmbedderPolicy: false,
     }),
   );

@@ -39,10 +39,8 @@ services:
       context: .
       dockerfile: Dockerfile.allinone
       args:
-        # Vite baked at build time. Reuse server-side GOOGLE_CLIENT_ID — same value.
         VITE_API_URL: /api
         VITE_APP_NAME: "Garap"
-        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -59,9 +57,6 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-https://garap.arahkarya.com}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://garap.arahkarya.com/api/auth/google/callback}
       PUBLIC_SIGNUP: ${PUBLIC_SIGNUP:-false}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
@@ -92,9 +87,6 @@ services:
       REDIS_PORT: 6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://garap.arahkarya.com/api/auth/google/callback}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS}
     command: ['node', 'server/dist/worker.js']
 

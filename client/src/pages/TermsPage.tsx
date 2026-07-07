@@ -20,8 +20,8 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Untuk menggunakan Layanan, Anda masuk menggunakan akun Google. Anda bertanggung jawab
-          penuh menjaga kerahasiaan kredensial akun Google Anda serta seluruh aktivitas yang
+          Untuk menggunakan Layanan, Anda masuk menggunakan email dan password. Anda bertanggung jawab
+          penuh menjaga kerahasiaan kredensial akun Anda serta seluruh aktivitas yang
           terjadi di bawah akun tersebut.
         </p>
         <p>

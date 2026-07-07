@@ -76,9 +76,9 @@ export async function login(input: LoginInput, ip: string | null, userAgent: str
     throw UnauthorizedError('Email atau password salah');
   }
 
-  // passwordHash is nullable for Google-OAuth-only accounts — block local login.
+  // passwordHash is nullable for legacy accounts without a local password.
   if (!user.passwordHash) {
-    throw UnauthorizedError('Akun ini hanya bisa login lewat Google');
+    throw UnauthorizedError('Akun ini tidak punya password lokal');
   }
   const ok = await bcrypt.compare(input.password, user.passwordHash);
   if (!ok) {
@@ -94,7 +94,7 @@ export async function login(input: LoginInput, ip: string | null, userAgent: str
     throw UnauthorizedError('Email atau password salah');
   }
 
-  // Gating verifikasi email (jalur email/password). User Google (tanpa passwordHash)
+  // Gating verifikasi email (jalur email/password). User tanpa passwordHash
   // dan user yang sudah verified tidak terpengaruh. Cek SEBELUM issue tokens.
   if (env.REQUIRE_EMAIL_VERIFICATION && user.passwordHash && !user.emailVerifiedAt) {
     throw ForbiddenError('Email belum diverifikasi. Cek inbox atau kirim ulang.');
@@ -231,7 +231,7 @@ export async function changePassword(
 ) {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   if (!user.passwordHash) {
-    throw UnauthorizedError('Akun ini tidak punya password lokal — pakai Google login');
+    throw UnauthorizedError('Akun ini tidak punya password lokal');
   }
   const ok = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!ok) throw UnauthorizedError('Password saat ini salah');

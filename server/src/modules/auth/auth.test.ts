@@ -17,9 +17,9 @@ describe('Auth endpoints', () => {
     expect(res.status).toBe(422);
   });
 
-  it('Google login rejects empty payload', async () => {
+  it('Google OAuth route no longer exists', async () => {
     const res = await request(app).post('/api/auth/google').send({});
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(404);
   });
 
   it('refresh rejects invalid token', async () => {

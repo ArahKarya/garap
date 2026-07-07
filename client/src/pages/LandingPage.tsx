@@ -330,7 +330,7 @@ export function LandingPage() {
             </Button>
           </div>
           <p className="animate-in fade-in slide-in-from-bottom-4 mt-4 text-xs text-white/70 delay-500 duration-700">
-            Masuk dengan akun Google. Gratis untuk pemakaian personal.
+            Daftar dengan email. Gratis untuk pemakaian personal.
           </p>
         </div>
       </section>
@@ -398,7 +398,7 @@ export function LandingPage() {
             Mulai menggarap hari ini
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-primary-foreground/80 sm:text-base">
-            Masuk dengan akun Google dan rapikan semua kerjaanmu dalam satu tempat.
+            Masuk dengan email dan rapikan semua kerjaanmu dalam satu tempat.
           </p>
           <Button asChild size="lg" variant="secondary" className="mt-8">
             <Link to="/login">
